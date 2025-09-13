@@ -1,0 +1,14 @@
+{
+  "name": "rslaf-machine-rentals",
+  "version": "1.0.0",
+  "description": "RSLAF Machine Rentals - Equipment Rental Management System",
+  "main": "start_server.py",
+  "scripts": {
+    "start": "python start_server.py",
+    "build": "echo 'Backend build complete'",
+    "install-all": "pip install -r requirements.txt && cd frontend && npm install && cd ../customer-portal && npm install"
+  },
+  "keywords": ["equipment", "rental", "rslaf", "sierra-leone"],
+  "author": "RSLAF Machine Rentals",
+  "license": "MIT"
+}

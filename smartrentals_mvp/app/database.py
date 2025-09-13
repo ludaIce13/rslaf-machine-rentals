@@ -1,13 +1,28 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
+from dotenv import load_dotenv
 
-# For production, use Postgres e.g.:
-# DATABASE_URL = "postgresql+psycopg://user:pass@host:5432/smartrentals"
-# Prefer environment variable if provided, otherwise default to local SQLite file
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./smartrentals.db")
+# Load environment variables
+load_dotenv()
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Database configuration
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+    # Fix for Render's postgres URL format
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
+
+# Default to SQLite for local development
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///./smartrentals.db"
+
+# Create engine with appropriate connection args
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

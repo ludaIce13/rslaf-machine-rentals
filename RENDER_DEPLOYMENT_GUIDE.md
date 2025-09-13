@@ -24,26 +24,44 @@ git branch -M main
 git push -u origin main
 ```
 
-## Step 2: Deploy Backend API on Render
+## Step 2: Deploy PostgreSQL Database on Render
 
-### 2.1 Create Web Service
+### 2.1 Create PostgreSQL Database
 1. Login to Render Dashboard
-2. Click "New +" → "Web Service"
-3. Connect your GitHub repository
-4. Configure:
+2. Click "New +" → "PostgreSQL"
+3. Configure:
+   - **Name**: `rslaf-database`
+   - **Database Name**: `smartrentals`
+   - **User**: `rslaf_user`
+   - **Plan**: Starter ($7/month)
+4. Click "Create Database"
+5. **Save the connection details** (you'll need them)
+
+## Step 3: Deploy Backend API on Render
+
+### 3.1 Create Web Service
+1. Click "New +" → "Web Service"
+2. Connect your GitHub repository
+3. Configure:
    - **Name**: `rslaf-backend`
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python start_server.py`
+   - **Build Command**: `cd smartrentals_mvp && pip install -r requirements.txt`
+   - **Start Command**: `cd smartrentals_mvp && python ../start_server.py`
    - **Plan**: Starter ($7/month)
 
-### 2.2 Environment Variables
+### 3.2 Environment Variables
 Add these environment variables:
-- `DATABASE_URL`: `sqlite:///./smartrentals.db`
+- `DATABASE_URL`: (Copy from your PostgreSQL database connection string)
 - `SECRET_KEY`: (Generate a random secret key)
 - `CORS_ORIGINS`: `https://rslaf-admin.onrender.com,https://rslaf-customer.onrender.com`
 
-## Step 3: Deploy Admin Portal
+### 3.3 Initialize Database
+After deployment, initialize your database:
+1. Go to your backend service dashboard
+2. Open the "Shell" tab
+3. Run: `python init_postgres_db.py`
+
+## Step 4: Deploy Admin Portal
 
 ### 3.1 Create Static Site
 1. Click "New +" → "Static Site"
@@ -57,9 +75,9 @@ Add these environment variables:
 ### 3.2 Environment Variables
 - `REACT_APP_API_URL`: `https://rslaf-backend.onrender.com`
 
-## Step 4: Deploy Customer Portal
+## Step 5: Deploy Customer Portal
 
-### 4.1 Create Static Site
+### 5.1 Create Static Site
 1. Click "New +" → "Static Site"
 2. Connect same GitHub repository
 3. Configure:
@@ -68,10 +86,10 @@ Add these environment variables:
    - **Publish Directory**: `customer-portal/build`
    - **Plan**: Free (Static sites are free)
 
-### 4.2 Environment Variables
+### 5.2 Environment Variables
 - `REACT_APP_API_URL`: `https://rslaf-backend.onrender.com`
 
-## Step 5: Update API URLs in Frontend
+## Step 6: Update API URLs in Frontend
 
 ### 5.1 Update Admin Portal API URL
 Create `frontend/.env.production`:
@@ -106,10 +124,11 @@ After deployment, your system will be available at:
 4. Verify payment gateway integration
 
 ## Monthly Costs (Render)
+- **PostgreSQL Database**: $7/month (Starter plan)
 - **Backend Web Service**: $7/month (Starter plan)
 - **Admin Portal**: Free (Static site)
 - **Customer Portal**: Free (Static site)
-- **Total**: $7/month
+- **Total**: $14/month
 
 ## Custom Domain (Optional)
 To use your own domain:

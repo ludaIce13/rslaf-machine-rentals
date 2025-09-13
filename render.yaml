@@ -1,14 +1,22 @@
+databases:
+  - name: rslaf-database
+    databaseName: smartrentals
+    user: rslaf_user
+    plan: starter
+
 services:
   # Backend API Service
   - type: web
     name: rslaf-backend
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python start_server.py
+    buildCommand: cd smartrentals_mvp && pip install -r requirements.txt
+    startCommand: cd smartrentals_mvp && python ../start_server.py
     plan: starter
     envVars:
       - key: DATABASE_URL
-        value: sqlite:///./smartrentals.db
+        fromDatabase:
+          name: rslaf-database
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS

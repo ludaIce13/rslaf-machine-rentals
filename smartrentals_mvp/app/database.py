@@ -10,11 +10,11 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
-    # Fix for Render's postgres URL format - use asyncpg driver
-    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    # Use psycopg3 driver for SQLAlchemy
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
 elif DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    # Also handle postgres:// format - use asyncpg driver
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+    # Handle postgres:// format by converting to psycopg3 driver
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
 
 # Default to SQLite for local development
 if not DATABASE_URL:

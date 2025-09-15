@@ -11,31 +11,37 @@ Base.metadata.create_all(bind=engine)
 
 # Lightweight startup migration for SQLite to add missing Product columns
 def run_startup_migrations():
-    with engine.begin() as conn:
-        # Inspect existing columns in products table
-        cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(products)").fetchall()}
-        # Add columns if missing
-        if 'image_url' not in cols:
-            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN image_url TEXT DEFAULT ''")
-        if 'category' not in cols:
-            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN category TEXT DEFAULT ''")
-        if 'published' not in cols:
-            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN published BOOLEAN DEFAULT 1")
-        if 'hourly_rate' not in cols:
-            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN hourly_rate REAL DEFAULT 0.0")
-        if 'min_hours' not in cols:
-            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN min_hours INTEGER DEFAULT 1")
-        if 'max_hours' not in cols:
-            conn.exec_driver_sql("ALTER TABLE products ADD COLUMN max_hours INTEGER")
+    try:
+        with engine.begin() as conn:
+            # Only run SQLite-specific migrations if using SQLite
+            if "sqlite" in str(engine.url):
+                # Inspect existing columns in products table
+                cols = {row[1] for row in conn.exec_driver_sql("PRAGMA table_info(products)").fetchall()}
+                # Add columns if missing
+                if 'image_url' not in cols:
+                    conn.exec_driver_sql("ALTER TABLE products ADD COLUMN image_url TEXT DEFAULT ''")
+                if 'category' not in cols:
+                    conn.exec_driver_sql("ALTER TABLE products ADD COLUMN category TEXT DEFAULT ''")
+                if 'published' not in cols:
+                    conn.exec_driver_sql("ALTER TABLE products ADD COLUMN published BOOLEAN DEFAULT 1")
+                if 'hourly_rate' not in cols:
+                    conn.exec_driver_sql("ALTER TABLE products ADD COLUMN hourly_rate REAL DEFAULT 0.0")
+                if 'min_hours' not in cols:
+                    conn.exec_driver_sql("ALTER TABLE products ADD COLUMN min_hours INTEGER DEFAULT 1")
+                if 'max_hours' not in cols:
+                    conn.exec_driver_sql("ALTER TABLE products ADD COLUMN max_hours INTEGER")
+    except Exception as e:
+        print(f"Migration skipped: {e}")
 
 run_startup_migrations()
 
 app = FastAPI(title="SmartRentals API", version="1.0.0")
 
 # CORS middleware for frontend integration
+cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:3002").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],  # React dev servers
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -57,4 +63,8 @@ app.include_router(reports.router)
 
 @app.get("/")
 def root():
-    return {"message": "SmartRentals API is running"}
+    return {"message": "RSLAF Machine Rentals API is running", "status": "healthy"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy", "service": "RSLAF Machine Rentals API"}

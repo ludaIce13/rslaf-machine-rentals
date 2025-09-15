@@ -6,10 +6,13 @@ import os
 sys.path.insert(0, os.path.abspath('.'))
 
 if __name__ == "__main__":
+    # Get port from environment variable (Render sets this automatically)
+    port = int(os.environ.get("PORT", 8000))
+    
     uvicorn.run(
         "smartrentals_mvp.app.main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="debug"
+        port=port,
+        reload=False,  # Disable reload in production
+        log_level="info"
     )

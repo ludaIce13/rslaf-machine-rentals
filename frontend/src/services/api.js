@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:8000';
+// Prefer REACT_APP_API_URL (as set in Render), fallback to REACT_APP_API_BASE, then localhost
+const API_BASE =
+  process.env.REACT_APP_API_URL ||
+  process.env.REACT_APP_API_BASE ||
+  'http://localhost:8000';
 
 // Create API instance
 const apiInstance = axios.create({

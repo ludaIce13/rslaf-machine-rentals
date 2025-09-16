@@ -22,24 +22,20 @@ services:
       - key: CORS_ORIGINS
         value: https://rslaf-admin.onrender.com,https://rslaf-customer.onrender.com
 
-  # Admin Portal
-  - type: web
+  # Admin Portal (Static Site)
+  - type: static
     name: rslaf-admin
-    env: node
     buildCommand: cd frontend && npm install && npm run build
-    startCommand: cd frontend && npx serve -s build -l 3000
-    plan: starter
+    publishPath: frontend/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://rslaf-backend.onrender.com
 
-  # Customer Portal  
-  - type: web
+  # Customer Portal (Static Site)
+  - type: static
     name: rslaf-customer
-    env: node
     buildCommand: cd customer-portal && npm install && npm run build
-    startCommand: cd customer-portal && npx serve -s build -l 3001
-    plan: starter
+    publishPath: customer-portal/build
     envVars:
       - key: REACT_APP_API_URL
         value: https://rslaf-backend.onrender.com

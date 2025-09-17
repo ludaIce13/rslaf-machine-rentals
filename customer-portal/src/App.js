@@ -27,6 +27,9 @@ import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import TipsChooseEquipment from './pages/TipsChooseEquipment';
+import TipsRentVsBuy from './pages/TipsRentVsBuy';
+import TipsSafety from './pages/TipsSafety';
 
 // Protected Route Component
 import ProtectedRoute from './components/ProtectedRoute';
@@ -49,6 +52,10 @@ function App() {
               <Route path="/faq" element={<FAQ />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/privacy" element={<Privacy />} />
+              {/* Tips & Guides */}
+              <Route path="/tips/choose-equipment" element={<TipsChooseEquipment />} />
+              <Route path="/tips/rent-vs-buy" element={<TipsRentVsBuy />} />
+              <Route path="/tips/safety" element={<TipsSafety />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
 

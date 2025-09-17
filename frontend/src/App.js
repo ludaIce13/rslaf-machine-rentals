@@ -6,6 +6,7 @@ import Dashboard from './components/Dashboard';
 import Inventory from './components/Inventory';
 import Customers from './components/Customers';
 import Orders from './components/Orders';
+import NewRental from './components/NewRental';
 import Settings from './components/Settings';
 import Reports from './components/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -44,6 +45,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Orders />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/orders/new" element={
+            <ProtectedRoute>
+              <Layout>
+                <NewRental />
               </Layout>
             </ProtectedRoute>
           } />

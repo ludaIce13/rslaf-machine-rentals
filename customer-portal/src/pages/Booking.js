@@ -37,16 +37,40 @@ const Booking = () => {
           const getDefaultImage = (product) => {
             const name = (product.name || '').toLowerCase();
             console.log('FIXED VERSION - Booking page getting image for:', name);
+            
+            const createEquipmentImage = (equipmentType, color = '#ffc900') => {
+              const svg = `
+                <svg width="400" height="250" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style="stop-color:#f8f9fa"/>
+                      <stop offset="100%" style="stop-color:#e9ecef"/>
+                    </linearGradient>
+                  </defs>
+                  <rect width="400" height="250" fill="url(#bg)"/>
+                  <g transform="translate(50, 50)">
+                    <rect x="50" y="80" width="200" height="60" fill="${color}" rx="8"/>
+                    <rect x="30" y="70" width="80" height="40" fill="${color}" rx="4"/>
+                    <rect x="220" y="60" width="60" height="80" fill="${color}" rx="4"/>
+                    <circle cx="80" cy="160" r="20" fill="#333"/>
+                    <circle cx="220" cy="160" r="20" fill="#333"/>
+                    <text x="150" y="50" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">${equipmentType}</text>
+                  </g>
+                </svg>
+              `;
+              return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+            };
+
             if (name.includes('backhoe') || name.includes('back hoe')) {
-              return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
+              return createEquipmentImage('BACKHOE LOADER', '#ffc900');
             }
             if (name.includes('excavator')) {
-              return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
+              return createEquipmentImage('EXCAVATOR', '#ff6b35');
             }
             if (name.includes('loader')) {
-              return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
+              return createEquipmentImage('LOADER', '#28a745');
             }
-            return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
+            return createEquipmentImage('CONSTRUCTION EQUIPMENT', '#6c757d');
           };
 
           const productData = {

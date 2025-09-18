@@ -90,7 +90,19 @@ const Products = () => {
   
   if (name.includes('backhoe') || name.includes('back hoe')) {
     console.log('Matched backhoe, using embedded backhoe SVG');
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjUwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iODAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwIiB5PSI4MCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPHJlY3QgeD0iMjIwIiB5PSI2MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPGNpcmNsZSBjeD0iODAiIGN5PSIyMDAiIHI9IjMwIiBmaWxsPSIjMzMzIi8+CjxjaXJjbGUgY3g9IjIyMCIgY3k9IjIwMCIgcj0iMzAiIGZpbGw9IiMzMzMiLz4KPHRleHQgeD0iMTUwIiB5PSI5MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CYWNraG9lIExvYWRlcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
+      <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="400" height="300" fill="#f0f0f0"/>
+        <g transform="translate(50 50)">
+          <rect x="50" y="100" width="200" height="80" fill="#ffc900" rx="8"/>
+          <rect x="20" y="80" width="100" height="60" fill="#ffc900" rx="4"/>
+          <rect x="220" y="60" width="80" height="100" fill="#ffc900" rx="4"/>
+          <circle cx="80" cy="200" r="30" fill="#333"/>
+          <circle cx="220" cy="200" r="30" fill="#333"/>
+          <text x="150" y="90" font-family="Arial" font-size="16" fill="#333" text-anchor="middle">Backhoe Loader</text>
+        </g>
+      </svg>
+    `);
   }
   if (name.includes('excavator')) {
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjgwIiB5PSIxMjAiIHdpZHRoPSIxNDAiIGhlaWdodD0iNjAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwMCIgeT0iODAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPGNpcmNsZSBjeD0iMTAwIiBjeT0iMjAwIiByPSIyNSIgZmlsbD0iIzMzMyIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIyMDAiIHI9IjI1IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkV4Y2F2YXRvcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';

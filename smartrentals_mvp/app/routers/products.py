@@ -6,14 +6,39 @@ from sqlalchemy import distinct
 from ..database import get_db
 from .. import models, schemas
 from ..auth import get_staff_or_admin_user
+from urllib.parse import urlparse
+import imghdr
+import re
+import io
+import os
 
 router = APIRouter(prefix="/products", tags=["products"])
 
+def _normalize_image_url(request: Request, image_url: str | None) -> str | None:
+    """Return absolute https URL for image if a relative path is provided."""
+    if not image_url:
+        return image_url
+    image_url = image_url.strip()
+    if not image_url:
+        return image_url
+    # If already absolute (http or https), return as-is
+    parsed = urlparse(image_url)
+    if parsed.scheme in ("http", "https"):
+        return image_url
+    # If it's a relative static path, prefix with base_url
+    if image_url.startswith("/static/"):
+        base_url = str(request.base_url).rstrip("/")
+        return f"{base_url}{image_url}"
+    return image_url
+
+
 @router.post("", response_model=schemas.ProductOut)
-def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
+def create_product(payload: schemas.ProductCreate, request: Request, db: Session = Depends(get_db)):
     try:
         # Create the product
-        p = models.Product(**payload.dict())
+        data = payload.dict()
+        data["image_url"] = _normalize_image_url(request, data.get("image_url")) or ""
+        p = models.Product(**data)
         db.add(p)
         db.commit()
         db.refresh(p)
@@ -68,11 +93,13 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return product
 
 @router.put("/{product_id}", response_model=schemas.ProductOut, dependencies=[Depends(get_staff_or_admin_user)])
-def update_product(product_id: int, payload: schemas.ProductUpdate, db: Session = Depends(get_db)):
+def update_product(product_id: int, payload: schemas.ProductUpdate, request: Request, db: Session = Depends(get_db)):
     product = db.get(models.Product, product_id)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     data = payload.dict(exclude_unset=True)
+    if "image_url" in data:
+        data["image_url"] = _normalize_image_url(request, data.get("image_url")) or ""
     for k, v in data.items():
         setattr(product, k, v)
     db.add(product)
@@ -95,15 +122,31 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"message": "Product deleted successfully"}
 
-# Upload endpoint for development/demo - no auth required
 @router.post("/upload-image")
 def upload_image(request: Request, file: UploadFile = File(...)):
+    # Simple API key guard (matches frontend X-API-Key header if provided)
+    expected_key = os.getenv("SMARTRENTALS_API_KEY", "").strip()
+    provided_key = request.headers.get("X-API-Key", "").strip()
+    if expected_key and provided_key != expected_key:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
     # Validate extension
     filename = file.filename or "upload"
     ext = os.path.splitext(filename)[1].lower()
     allowed = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
     if ext not in allowed:
         raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    # Read content and validate size and magic
+    content = file.file.read()
+    max_bytes = 5 * 1024 * 1024  # 5MB
+    if len(content) > max_bytes:
+        raise HTTPException(status_code=413, detail="File too large (max 5MB)")
+    kind = imghdr.what(None, h=content)
+    if kind not in {"png", "jpeg", "gif", "webp"}:
+        # Allow jpg as jpeg
+        if not (kind == "jpeg" and ext in {".jpg", ".jpeg"}):
+            raise HTTPException(status_code=400, detail="Invalid image data")
 
     # Build upload path under app/static/uploads/products
     base_dir = os.path.dirname(os.path.dirname(__file__))  # app/
@@ -117,7 +160,7 @@ def upload_image(request: Request, file: UploadFile = File(...)):
 
     # Save file
     with open(abs_path, "wb") as out:
-        out.write(file.file.read())
+        out.write(content)
 
     rel_path = f"/static/uploads/products/{safe_name}"
     base_url = str(request.base_url).rstrip("/")

@@ -38,18 +38,15 @@ const Booking = () => {
             const name = (product.name || '').toLowerCase();
             console.log('Booking page - getting image for:', name);
             if (name.includes('backhoe') || name.includes('back hoe')) {
-              return 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+              return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjUwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iODAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwIiB5PSI4MCIgd2lkdGg9IjEwMCIgaGVpZ2h0PSI2MCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPHJlY3QgeD0iMjIwIiB5PSI2MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPGNpcmNsZSBjeD0iODAiIGN5PSIyMDAiIHI9IjMwIiBmaWxsPSIjMzMzIi8+CjxjaXJjbGUgY3g9IjIyMCIgY3k9IjIwMCIgcj0iMzAiIGZpbGw9IiMzMzMiLz4KPHRleHQgeD0iMTUwIiB5PSI5MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE2IiBmaWxsPSIjMzMzIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5CYWNraG9lIExvYWRlcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';
             }
             if (name.includes('excavator')) {
-              return 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+              return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjgwIiB5PSIxMjAiIHdpZHRoPSIxNDAiIGhlaWdodD0iNjAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwMCIgeT0iODAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPGNpcmNsZSBjeD0iMTAwIiBjeT0iMjAwIiByPSIyNSIgZmlsbD0iIzMzMyIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIyMDAiIHI9IjI1IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkV4Y2F2YXRvcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';
             }
             if (name.includes('loader')) {
-              return 'https://images.pexels.com/photos/162553/keys-workshop-mechanic-tools-162553.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+              return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjYwIiB5PSIxMDAiIHdpZHRoPSIxODAiIGhlaWdodD0iNzAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwIiB5PSI4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZmZjOTAwIiByeD0iNCIvPgo8Y2lyY2xlIGN4PSI5MCIgY3k9IjIwMCIgcj0iMzAiIGZpbGw9IiMzMzMiLz4KPGNpcmNsZSBjeD0iMjEwIiBjeT0iMjAwIiByPSIzMCIgZmlsbD0iIzMzMyIvPgo8dGV4dCB4PSIxNTAiIHk9IjkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkxvYWRlcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';
             }
-            if (name.includes('truck') || name.includes('dump')) {
-              return 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
-            }
-            return 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
+            return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjUwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iODAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxjaXJjbGUgY3g9IjgwIiBjeT0iMjAwIiByPSIzMCIgZmlsbD0iIzMzMyIvPgo8Y2lyY2xlIGN4PSIyMjAiIGN5PSIyMDAiIHI9IjMwIiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iOTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Q29uc3RydWN0aW9uIEVxdWlwbWVudDwvdGV4dD4KPC9nPgo8L3N2Zz4K';
           };
 
           const productData = {

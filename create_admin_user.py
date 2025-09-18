@@ -9,25 +9,27 @@ from sqlalchemy.orm import Session
 # Get database session
 db_session = next(get_db())
 
-# Check if admin user exists
-admin_user = db_session.query(models.User).filter(models.User.email == 'admin@smartrentals.com').first()
-
-if admin_user:
-    print('Admin user found:', admin_user.email, 'Role:', admin_user.role)
-    print('Password hash:', admin_user.password_hash[:20] + '...')
-else:
-    print('Admin user not found, creating...')
-    
-    # Create admin user
-    hashed_password = auth.get_password_hash('admin123')
-    admin_user = models.User(
-        email='admin@smartrentals.com',
+def ensure_admin(email: str, password: str = 'admin123'):
+    user = db_session.query(models.User).filter(models.User.email == email).first()
+    if user:
+        print('Admin user found:', user.email, 'Role:', user.role)
+        return
+    print('Admin user not found for', email, '- creating...')
+    hashed_password = auth.get_password_hash(password)
+    user = models.User(
+        email=email,
         password_hash=hashed_password,
-        role=models.UserRole.admin.value
+        role=models.UserRole.admin.value,
+        is_active=True,
     )
-    db_session.add(admin_user)
+    db_session.add(user)
     db_session.commit()
-    db_session.refresh(admin_user)
-    print('Admin user created successfully:', admin_user.email)
+    db_session.refresh(user)
+    print('Admin user created successfully:', user.email)
 
-print('Admin user setup completed!')
+if __name__ == "__main__":
+    # Ensure the production demo account exists
+    ensure_admin('admin@rslaf.com')
+    # Keep backward compatibility for older demo email if used
+    ensure_admin('admin@smartrentals.com')
+    print('Admin user setup completed!')

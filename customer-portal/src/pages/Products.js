@@ -77,24 +77,33 @@ const Products = () => {
 
   const getCategory = (p) => p.category || 'Equipment';
   const getImage = (p) => {
-  if (p.image_url) return p.image_url;
+  console.log('Getting image for product:', p.name, 'image_url:', p.image_url);
   
-  // Default images based on product name/category
+  if (p.image_url && p.image_url.trim()) {
+    console.log('Using provided image_url:', p.image_url);
+    return p.image_url;
+  }
+  
+  // Default images based on product name/category - using more reliable sources
   const name = (p.name || '').toLowerCase();
+  console.log('Product name for image matching:', name);
+  
   if (name.includes('backhoe') || name.includes('back hoe')) {
-    return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop';
+    console.log('Matched backhoe, using backhoe image');
+    return 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
   }
   if (name.includes('excavator')) {
-    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop';
+    return 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
   }
   if (name.includes('loader')) {
-    return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop';
+    return 'https://images.pexels.com/photos/162553/keys-workshop-mechanic-tools-162553.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
   }
   if (name.includes('truck') || name.includes('dump')) {
-    return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop';
+    return 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
   }
   // Default construction equipment image
-  return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop';
+  console.log('Using default construction equipment image');
+  return 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
 };
 
   const handleSearch = (e) => {
@@ -164,7 +173,15 @@ const Products = () => {
           {filteredProducts.map(product => (
             <div key={product.id} className="equipment-card">
               <div className="equipment-image">
-                <img src={product.image_url || getImage(product)} alt={product.name} />
+                <img 
+                  src={product.image_url || getImage(product)} 
+                  alt={product.name}
+                  onError={(e) => {
+                    console.error('Image failed to load:', e.target.src);
+                    e.target.src = 'https://via.placeholder.com/400x300/cccccc/666666?text=Equipment+Image';
+                  }}
+                  onLoad={() => console.log('Image loaded successfully:', product.name)}
+                />
                 <div className="equipment-type">{getCategory(product)}</div>
                 <div className="availability-badge">
                   <span className={`status ${(inventoryCounts[product.id] || 0) > 0 ? 'available' : 'unavailable'}`}>

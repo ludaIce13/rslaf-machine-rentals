@@ -36,19 +36,20 @@ const Booking = () => {
           // Get appropriate default image based on product name
           const getDefaultImage = (product) => {
             const name = (product.name || '').toLowerCase();
+            console.log('Booking page - getting image for:', name);
             if (name.includes('backhoe') || name.includes('back hoe')) {
-              return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop';
+              return 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
             }
             if (name.includes('excavator')) {
-              return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop';
+              return 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
             }
             if (name.includes('loader')) {
-              return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop';
+              return 'https://images.pexels.com/photos/162553/keys-workshop-mechanic-tools-162553.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
             }
             if (name.includes('truck') || name.includes('dump')) {
-              return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop';
+              return 'https://images.pexels.com/photos/1108572/pexels-photo-1108572.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
             }
-            return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop';
+            return 'https://images.pexels.com/photos/1108101/pexels-photo-1108101.jpeg?auto=compress&cs=tinysrgb&w=400&h=300&fit=crop';
           };
 
           const productData = {
@@ -235,7 +236,15 @@ const Booking = () => {
       <div className="booking-content">
         <div className="equipment-summary">
           <div className="equipment-image">
-            <img src={product.image_url} alt={product.name} />
+            <img 
+              src={product.image_url} 
+              alt={product.name}
+              onError={(e) => {
+                console.error('Booking page - Image failed to load:', e.target.src);
+                e.target.src = 'https://via.placeholder.com/400x300/cccccc/666666?text=Equipment+Image';
+              }}
+              onLoad={() => console.log('Booking page - Image loaded successfully:', product.name)}
+            />
             <div className="equipment-type">{product.category}</div>
           </div>
           <div className="equipment-details">

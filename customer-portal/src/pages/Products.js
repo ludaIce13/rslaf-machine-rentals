@@ -88,9 +88,22 @@ const Products = () => {
   const name = (p.name || '').toLowerCase();
   console.log('FIXED VERSION - Product name for image matching:', name);
   
-  // Always return a working image - no complex encoding
-  console.log('FIXED VERSION - Using simple working image');
-  return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&auto=format';
+  // Return appropriate image based on equipment type
+  if (name.includes('backhoe') || name.includes('back hoe')) {
+    console.log('FIXED VERSION - Using backhoe image');
+    return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop&auto=format';
+  }
+  if (name.includes('excavator')) {
+    console.log('FIXED VERSION - Using excavator image');
+    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&auto=format';
+  }
+  if (name.includes('loader')) {
+    console.log('FIXED VERSION - Using loader image');
+    return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop&auto=format';
+  }
+  // Default construction equipment image
+  console.log('FIXED VERSION - Using default construction image');
+  return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop&auto=format';
 };
 
   const handleSearch = (e) => {

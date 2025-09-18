@@ -80,6 +80,21 @@ def update_product(product_id: int, payload: schemas.ProductUpdate, db: Session 
     db.refresh(product)
     return product
 
+@router.delete("/{product_id}", dependencies=[Depends(get_staff_or_admin_user)])
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.get(models.Product, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    # Also delete associated inventory items
+    inventory_items = db.query(models.InventoryItem).filter(models.InventoryItem.product_id == product_id).all()
+    for item in inventory_items:
+        db.delete(item)
+    
+    db.delete(product)
+    db.commit()
+    return {"message": "Product deleted successfully"}
+
 # Upload endpoint for development/demo - no auth required
 @router.post("/upload-image")
 def upload_image(request: Request, file: UploadFile = File(...)):

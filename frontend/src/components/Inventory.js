@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProducts, createProduct, updateProduct, getCategories, getInventoryByProduct, createInventoryItem, updateInventoryItem, deleteInventoryItem, getInventoryCounts, uploadProductImage } from '../services/api';
+import { getProducts, createProduct, updateProduct, deleteProduct, getCategories, getInventoryByProduct, createInventoryItem, updateInventoryItem, deleteInventoryItem, getInventoryCounts, uploadProductImage } from '../services/api';
 
 const Inventory = () => {
   const [products, setProducts] = useState([]);
@@ -164,6 +164,22 @@ const Inventory = () => {
     } catch (e) {
       console.error('Failed to save product', e);
       alert('Failed to save product');
+    }
+  };
+
+  const handleDeleteProduct = async (product) => {
+    if (!window.confirm(`Are you sure you want to delete "${product.name}"? This will also delete all associated inventory units and cannot be undone.`)) {
+      return;
+    }
+    
+    try {
+      await deleteProduct(product.id);
+      await fetchProducts();
+      await fetchCounts();
+      alert('Product deleted successfully!');
+    } catch (e) {
+      console.error('Failed to delete product', e);
+      alert(`Failed to delete product: ${e.response?.data?.detail || e.message}`);
     }
   };
 
@@ -409,6 +425,7 @@ const Inventory = () => {
                     Units
                   </button>
                   <button onClick={() => openEdit(product)} className="text-gray-700 hover:text-gray-900 text-sm">Edit</button>
+                  <button onClick={() => handleDeleteProduct(product)} className="text-red-600 hover:text-red-700 text-sm">Delete</button>
                 </div>
               </div>
             </div>

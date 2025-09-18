@@ -179,7 +179,16 @@ const Inventory = () => {
       alert('Product deleted successfully!');
     } catch (e) {
       console.error('Failed to delete product', e);
-      alert(`Failed to delete product: ${e.response?.data?.detail || e.message}`);
+      
+      // Handle specific error cases
+      if (e.response?.status === 401 || e.response?.status === 403) {
+        alert('Authentication failed. Please log out and log back in, then try again.');
+      } else if (e.response?.status === 404) {
+        alert('Product not found. It may have already been deleted.');
+        await fetchProducts(); // Refresh the list
+      } else {
+        alert(`Failed to delete product: ${e.response?.data?.detail || e.message}`);
+      }
     }
   };
 

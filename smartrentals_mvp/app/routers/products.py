@@ -80,7 +80,7 @@ def update_product(product_id: int, payload: schemas.ProductUpdate, db: Session 
     db.refresh(product)
     return product
 
-@router.delete("/{product_id}")
+@router.delete("/{product_id}", dependencies=[Depends(get_staff_or_admin_user)])
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.get(models.Product, product_id)
     if not product:

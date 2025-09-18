@@ -23,6 +23,25 @@ apiInstance.interceptors.request.use((config) => {
   return config;
 });
 
+// Add response interceptor to handle authentication errors
+apiInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is invalid or expired
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Only redirect to login if we're not already on the login page
+      if (window.location.pathname !== '/login' && !window.location.pathname.includes('login')) {
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Authentication
 export const register = (userData) => apiInstance.post('/auth/register', userData);
 export const login = (credentials) => {

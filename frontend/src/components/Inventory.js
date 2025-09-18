@@ -231,19 +231,26 @@ const Inventory = () => {
   };
 
   const getProductImage = (product) => {
-    if (product?.image_url) return product.image_url;
-    const imageMap = {
-      'projector': 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-      'sound': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
-      'camera': 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=300&fit=crop',
-      'lighting': 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=400&h=300&fit=crop',
-      'microphone': 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&h=300&fit=crop',
-      'tripod': 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=400&h=300&fit=crop',
-      'screen': 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=400&h=300&fit=crop'
-    };
+    console.log('Getting image for product:', product?.name, 'image_url:', product?.image_url);
     
-    const key = Object.keys(imageMap).find(k => (product?.name || '').toLowerCase().includes(k));
-    return imageMap[key] || 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop';
+    // ALWAYS use the uploaded image if it exists
+    if (product?.image_url && product.image_url.trim()) {
+      let imageUrl = product.image_url;
+      
+      // If it's a relative path, convert to full URL using backend server
+      if (imageUrl.startsWith('/static/')) {
+        const backendUrl = process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com';
+        imageUrl = `${backendUrl}${imageUrl}`;
+        console.log('Converted relative path to full URL:', imageUrl);
+      }
+      
+      console.log('Using actual uploaded image:', imageUrl);
+      return imageUrl;
+    }
+    
+    // Only use a simple fallback if no image was uploaded
+    console.log('No image uploaded, using equipment fallback');
+    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&crop=center&auto=format&q=80';
   };
 
   // Create product (merged Products functionality)

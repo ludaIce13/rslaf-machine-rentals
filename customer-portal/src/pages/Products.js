@@ -23,13 +23,10 @@ const Products = () => {
 
   const loadProducts = async () => {
     try {
-      const response = await fetch('http://localhost:8000/products?published_only=true');
-      if (response.ok) {
-        const apiProducts = await response.json();
-        if (apiProducts && apiProducts.length > 0) {
-          setProducts(apiProducts);
-          return;
-        }
+      const response = await getProducts({ published_only: true });
+      if (response.data && response.data.length > 0) {
+        setProducts(response.data);
+        return;
       }
     } catch (error) {
       console.log('API not available, using fallback data');
@@ -55,10 +52,9 @@ const Products = () => {
 
   const loadCategories = async () => {
     try {
-      const response = await fetch('http://localhost:8000/products/categories');
-      if (response.ok) {
-        const categories = await response.json();
-        setCategoryOptions(['All Equipment', ...categories]);
+      const response = await getCategories();
+      if (response.data) {
+        setCategoryOptions(['All Equipment', ...response.data]);
       }
     } catch (error) {
       console.log('Categories API not available');

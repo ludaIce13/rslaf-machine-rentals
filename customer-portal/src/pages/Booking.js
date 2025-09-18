@@ -38,15 +38,15 @@ const Booking = () => {
             const name = (product.name || '').toLowerCase();
             console.log('FIXED VERSION - Booking page getting image for:', name);
             if (name.includes('backhoe') || name.includes('back hoe')) {
-              return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop&auto=format';
+              return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
             }
             if (name.includes('excavator')) {
-              return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&auto=format';
+              return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
             }
             if (name.includes('loader')) {
-              return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop&auto=format';
+              return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
             }
-            return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop&auto=format';
+            return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
           };
 
           const productData = {

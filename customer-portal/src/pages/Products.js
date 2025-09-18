@@ -91,19 +91,19 @@ const Products = () => {
   // Return appropriate image based on equipment type
   if (name.includes('backhoe') || name.includes('back hoe')) {
     console.log('FIXED VERSION - Using backhoe image');
-    return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop&auto=format';
+    return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
   }
   if (name.includes('excavator')) {
     console.log('FIXED VERSION - Using excavator image');
-    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&auto=format';
+    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
   }
   if (name.includes('loader')) {
     console.log('FIXED VERSION - Using loader image');
-    return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop&auto=format';
+    return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
   }
   // Default construction equipment image
   console.log('FIXED VERSION - Using default construction image');
-  return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop&auto=format';
+  return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
 };
 
   const handleSearch = (e) => {
@@ -180,7 +180,7 @@ const Products = () => {
                   crossOrigin="anonymous"
                   onError={(e) => {
                     console.error('FIXED VERSION - Image failed to load:', e.target.src);
-                    e.target.src = 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop&auto=format';
+                    e.target.src = 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
                   }}
                   onLoad={() => console.log('Image loaded successfully:', product.name)}
                 />

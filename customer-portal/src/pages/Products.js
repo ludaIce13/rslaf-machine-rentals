@@ -77,42 +77,20 @@ const Products = () => {
 
   const getCategory = (p) => p.category || 'Equipment';
   const getImage = (p) => {
-  console.log('Getting image for product:', p.name, 'image_url:', p.image_url);
+  console.log('FIXED VERSION - Getting image for product:', p.name, 'image_url:', p.image_url);
   
   if (p.image_url && p.image_url.trim()) {
     console.log('Using provided image_url:', p.image_url);
     return p.image_url;
   }
   
-  // Embedded SVG images that will always work - no external dependencies
+  // Simple, guaranteed to work image
   const name = (p.name || '').toLowerCase();
-  console.log('Product name for image matching:', name);
+  console.log('FIXED VERSION - Product name for image matching:', name);
   
-  if (name.includes('backhoe') || name.includes('back hoe')) {
-    console.log('Matched backhoe, using embedded backhoe SVG');
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`
-      <svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="400" height="300" fill="#f0f0f0"/>
-        <g transform="translate(50 50)">
-          <rect x="50" y="100" width="200" height="80" fill="#ffc900" rx="8"/>
-          <rect x="20" y="80" width="100" height="60" fill="#ffc900" rx="4"/>
-          <rect x="220" y="60" width="80" height="100" fill="#ffc900" rx="4"/>
-          <circle cx="80" cy="200" r="30" fill="#333"/>
-          <circle cx="220" cy="200" r="30" fill="#333"/>
-          <text x="150" y="90" font-family="Arial" font-size="16" fill="#333" text-anchor="middle">Backhoe Loader</text>
-        </g>
-      </svg>
-    `);
-  }
-  if (name.includes('excavator')) {
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjgwIiB5PSIxMjAiIHdpZHRoPSIxNDAiIGhlaWdodD0iNjAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwMCIgeT0iODAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgZmlsbD0iI2ZmYzkwMCIgcng9IjQiLz4KPGNpcmNsZSBjeD0iMTAwIiBjeT0iMjAwIiByPSIyNSIgZmlsbD0iIzMzMyIvPgo8Y2lyY2xlIGN4PSIyMDAiIGN5PSIyMDAiIHI9IjI1IiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iMTAwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkV4Y2F2YXRvcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';
-  }
-  if (name.includes('loader')) {
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjYwIiB5PSIxMDAiIHdpZHRoPSIxODAiIGhlaWdodD0iNzAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxyZWN0IHg9IjIwIiB5PSI4MCIgd2lkdGg9IjgwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjZmZjOTAwIiByeD0iNCIvPgo8Y2lyY2xlIGN4PSI5MCIgY3k9IjIwMCIgcj0iMzAiIGZpbGw9IiMzMzMiLz4KPGNpcmNsZSBjeD0iMjEwIiBjeT0iMjAwIiByPSIzMCIgZmlsbD0iIzMzMyIvPgo8dGV4dCB4PSIxNTAiIHk9IjkwIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiIGZpbGw9IiMzMzMiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkxvYWRlcjwvdGV4dD4KPC9nPgo8L3N2Zz4K';
-  }
-  // Default construction equipment image
-  console.log('Using default construction equipment SVG');
-  return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDQwMCAzMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMzAwIiBmaWxsPSIjZjBmMGYwIi8+CjxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwIDUwKSI+CjxyZWN0IHg9IjUwIiB5PSIxMDAiIHdpZHRoPSIyMDAiIGhlaWdodD0iODAiIGZpbGw9IiNmZmM5MDAiIHJ4PSI4Ii8+CjxjaXJjbGUgY3g9IjgwIiBjeT0iMjAwIiByPSIzMCIgZmlsbD0iIzMzMyIvPgo8Y2lyY2xlIGN4PSIyMjAiIGN5PSIyMDAiIHI9IjMwIiBmaWxsPSIjMzMzIi8+Cjx0ZXh0IHg9IjE1MCIgeT0iOTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNiIgZmlsbD0iIzMzMyIgdGV4dC1hbmNob3I9Im1pZGRsZSI+Q29uc3RydWN0aW9uIEVxdWlwbWVudDwvdGV4dD4KPC9nPgo8L3N2Zz4K';
+  // Always return a working image - no complex encoding
+  console.log('FIXED VERSION - Using simple working image');
+  return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&auto=format';
 };
 
   const handleSearch = (e) => {
@@ -183,13 +161,13 @@ const Products = () => {
             <div key={product.id} className="equipment-card">
               <div className="equipment-image">
                 <img 
-                  src={product.image_url || getImage(product)} 
+                  src={getImage(product)} 
                   alt={product.name}
                   referrerPolicy="no-referrer"
                   crossOrigin="anonymous"
                   onError={(e) => {
-                    console.error('Image failed to load:', e.target.src);
-                    e.target.src = 'https://via.placeholder.com/400x300/cccccc/666666?text=Equipment+Image';
+                    console.error('FIXED VERSION - Image failed to load:', e.target.src);
+                    e.target.src = 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop&auto=format';
                   }}
                   onLoad={() => console.log('Image loaded successfully:', product.name)}
                 />

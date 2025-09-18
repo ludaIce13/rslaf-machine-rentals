@@ -76,7 +76,26 @@ const Products = () => {
 
 
   const getCategory = (p) => p.category || 'Equipment';
-  const getImage = (p) => p.image_url || '';
+  const getImage = (p) => {
+  if (p.image_url) return p.image_url;
+  
+  // Default images based on product name/category
+  const name = (p.name || '').toLowerCase();
+  if (name.includes('backhoe') || name.includes('back hoe')) {
+    return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop';
+  }
+  if (name.includes('excavator')) {
+    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop';
+  }
+  if (name.includes('loader')) {
+    return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop';
+  }
+  if (name.includes('truck') || name.includes('dump')) {
+    return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop';
+  }
+  // Default construction equipment image
+  return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop';
+};
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);

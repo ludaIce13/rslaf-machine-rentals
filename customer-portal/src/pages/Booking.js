@@ -33,12 +33,30 @@ const Booking = () => {
         const response = await getProduct(productId);
         if (response.data) {
           // Ensure the product has all required fields with defaults
+          // Get appropriate default image based on product name
+          const getDefaultImage = (product) => {
+            const name = (product.name || '').toLowerCase();
+            if (name.includes('backhoe') || name.includes('back hoe')) {
+              return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=300&fit=crop';
+            }
+            if (name.includes('excavator')) {
+              return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop';
+            }
+            if (name.includes('loader')) {
+              return 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop';
+            }
+            if (name.includes('truck') || name.includes('dump')) {
+              return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop';
+            }
+            return 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=300&fit=crop';
+          };
+
           const productData = {
             ...response.data,
             hourly_rate: response.data.hourly_rate || response.data.daily_rate || 100,
             available: response.data.available || 1,
             location: response.data.location || 'Main Yard',
-            image_url: response.data.image_url || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop'
+            image_url: response.data.image_url || getDefaultImage(response.data)
           };
           setProduct(productData);
           return;

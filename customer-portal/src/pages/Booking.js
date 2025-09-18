@@ -239,6 +239,8 @@ const Booking = () => {
             <img 
               src={product.image_url} 
               alt={product.name}
+              referrerPolicy="no-referrer"
+              crossOrigin="anonymous"
               onError={(e) => {
                 console.error('Booking page - Image failed to load:', e.target.src);
                 e.target.src = 'https://via.placeholder.com/400x300/cccccc/666666?text=Equipment+Image';

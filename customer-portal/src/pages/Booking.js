@@ -39,12 +39,20 @@ const Booking = () => {
             return 'https://images.unsplash.com/photo-1572981779307-38b8cabb2407?w=400&h=250&fit=crop&crop=center&auto=format&q=80';
           };
 
+          // Fix image URL if it's a relative path
+          let imageUrl = response.data.image_url;
+          if (imageUrl && imageUrl.startsWith('/static/')) {
+            const backendUrl = process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com';
+            imageUrl = `${backendUrl}${imageUrl}`;
+            console.log('Booking page - Converted relative path to full URL:', imageUrl);
+          }
+
           const productData = {
             ...response.data,
             hourly_rate: response.data.hourly_rate || response.data.daily_rate || 100,
             available: response.data.available || 1,
             location: response.data.location || 'Main Yard',
-            image_url: response.data.image_url || getDefaultImage(response.data)
+            image_url: imageUrl || getDefaultImage(response.data)
           };
           setProduct(productData);
           return;

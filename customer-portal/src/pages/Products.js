@@ -81,8 +81,17 @@ const Products = () => {
   
   // ALWAYS use the provided image_url if it exists - this is the actual photo from inventory
   if (p.image_url && p.image_url.trim()) {
-    console.log('Using actual inventory image:', p.image_url);
-    return p.image_url;
+    let imageUrl = p.image_url;
+    
+    // If it's a relative path, convert to full URL using backend server
+    if (imageUrl.startsWith('/static/')) {
+      const backendUrl = process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com';
+      imageUrl = `${backendUrl}${imageUrl}`;
+      console.log('Converted relative path to full URL:', imageUrl);
+    }
+    
+    console.log('Using actual inventory image:', imageUrl);
+    return imageUrl;
   }
   
   // Only use fallback if no image_url is provided

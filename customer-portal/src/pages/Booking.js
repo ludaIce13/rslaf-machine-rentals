@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getProduct } from '../services/api';
 import './Booking.css';
 
 const Booking = () => {
@@ -29,9 +30,16 @@ const Booking = () => {
     // Load product details from API
     const loadProduct = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/products/${productId}`);
-        if (response.ok) {
-          const productData = await response.json();
+        const response = await getProduct(productId);
+        if (response.data) {
+          // Ensure the product has all required fields with defaults
+          const productData = {
+            ...response.data,
+            hourly_rate: response.data.hourly_rate || response.data.daily_rate || 100,
+            available: response.data.available || 1,
+            location: response.data.location || 'Main Yard',
+            image_url: response.data.image_url || 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop'
+          };
           setProduct(productData);
           return;
         }

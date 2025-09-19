@@ -33,6 +33,12 @@ const Inventory = () => {
   const [editData, setEditData] = useState(null);
 
   useEffect(() => {
+    // Validate critical environment variables
+    const apiUrl = process.env.REACT_APP_API_URL;
+    if (!apiUrl) {
+      console.warn('REACT_APP_API_URL not set - using fallback backend URL');
+    }
+    
     fetchProducts();
     fetchCategories();
     fetchCounts();
@@ -231,26 +237,40 @@ const Inventory = () => {
   };
 
   const getProductImage = (product) => {
-    console.log('Getting image for product:', product?.name, 'image_url:', product?.image_url);
-    
     // ALWAYS use the uploaded image if it exists
     if (product?.image_url && product.image_url.trim()) {
-      let imageUrl = product.image_url;
+      let imageUrl = product.image_url.trim();
       
       // If it's a relative path, convert to full URL using backend server
       if (imageUrl.startsWith('/static/')) {
         const backendUrl = process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com';
         imageUrl = `${backendUrl}${imageUrl}`;
-        console.log('Converted relative path to full URL:', imageUrl);
       }
       
-      console.log('Using actual uploaded image:', imageUrl);
       return imageUrl;
     }
     
-    // Only use a simple fallback if no image was uploaded
-    console.log('No image uploaded, using equipment fallback');
-    return 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400&h=300&fit=crop&crop=center&auto=format&q=80';
+    // Neutral equipment SVG fallback only if no image was uploaded
+    const svg = `
+      <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f8f9fa"/>
+            <stop offset="100%" style="stop-color:#e9ecef"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="300" fill="url(#bg)"/>
+        <g transform="translate(50, 75)">
+          <rect x="50" y="60" width="200" height="60" fill="#6c757d" rx="8"/>
+          <rect x="30" y="50" width="80" height="40" fill="#6c757d" rx="4"/>
+          <rect x="220" y="40" width="60" height="80" fill="#6c757d" rx="4"/>
+          <circle cx="80" cy="140" r="20" fill="#333"/>
+          <circle cx="220" cy="140" r="20" fill="#333"/>
+          <text x="150" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">EQUIPMENT</text>
+        </g>
+      </svg>
+    `;
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   };
 
   // Create product (merged Products functionality)
@@ -425,6 +445,21 @@ const Inventory = () => {
                 src={getProductImage(product)}
                 alt={product.name}
                 className="w-full h-48 object-cover"
+                onError={(e) => {
+                  // Switch to neutral SVG fallback if the provided URL fails
+                  const fallbackSvg = `
+                    <svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+                      <rect width="400" height="300" fill="#f8f9fa"/>
+                      <g transform="translate(50, 75)">
+                        <rect x="50" y="60" width="200" height="60" fill="#6c757d" rx="8"/>
+                        <circle cx="80" cy="140" r="20" fill="#333"/>
+                        <circle cx="220" cy="140" r="20" fill="#333"/>
+                        <text x="150" y="30" text-anchor="middle" font-family="Arial" font-size="14" fill="#333">EQUIPMENT</text>
+                      </g>
+                    </svg>
+                  `;
+                  e.target.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(fallbackSvg);
+                }}
               />
               {getStatusBadge(product.status)}
             </div>

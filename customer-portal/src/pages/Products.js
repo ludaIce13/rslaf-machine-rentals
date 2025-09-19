@@ -15,10 +15,14 @@ const Products = () => {
   const [categoryOptions, setCategoryOptions] = useState(['All Equipment']);
 
   useEffect(() => {
-    // Load products from API first, then fallback to sample data
-    loadProducts();
-    loadCategories();
-    loadInventoryCounts();
+    // Validate critical environment variables
+    const apiUrl = process.env.REACT_APP_API_URL;
+    if (!apiUrl) {
+      console.warn('REACT_APP_API_URL not set - using fallback backend URL');
+    }
+    
+    fetchProducts();
+    fetchInventoryCounts();
   }, []);
 
   const loadProducts = async () => {

@@ -176,33 +176,20 @@ const Booking = () => {
     e.preventDefault();
     setLoading(true);
 
+    // Navigate to payment page with booking data
     const bookingData = {
-      product: product,
+      product,
       rentalType,
-      ...(rentalType === 'dateRange' ? {
-        startDate,
-        endDate,
-        startTime,
-        endTime,
-        totalHours: calculatedHours
-      } : {
-        startDate,
-        startTime,
-        totalHours: parseFloat(totalHours),
-        calculatedEndDate
-      }),
+      startDate,
+      endDate,
+      totalHours: rentalType === 'dateRange' ? calculatedHours : totalHours,
       totalPrice,
-      paymentMethod,
       customerInfo
     };
-
-    console.log('Booking Data:', bookingData);
-
-    // Simulate booking submission
+    
     setTimeout(() => {
-      alert(`Booking request submitted successfully!\n\nTotal Hours: ${rentalType === 'dateRange' ? calculatedHours : totalHours}\nTotal Price: $${totalPrice.toFixed(2)}\n\nWe will contact you shortly to confirm your reservation.`);
-      navigate('/products');
-    }, 2000);
+      navigate('/payment', { state: bookingData });
+    }, 1000);
   };
 
   if (!product) {

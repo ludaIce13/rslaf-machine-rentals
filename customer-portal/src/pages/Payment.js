@@ -37,33 +37,25 @@ const Payment = () => {
     setProcessing(true);
     
     try {
-      // Create order in backend
-      const orderData = {
-        customer_id: 1,
-        product_id: bookingData.product.id,
-        rental_type: bookingData.rentalType,
-        start_date: bookingData.startDate,
-        end_date: bookingData.endDate,
-        total_hours: bookingData.totalHours,
-        total_price: bookingData.totalPrice,
-        payment_method: bookingData.paymentMethod || 'orange_money',
-        customer_info: bookingData.customerInfo,
-        status: 'confirmed'
-      };
-
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders`, {
-        method: 'POST',
+      // Update existing order status to "paid" and "ready for delivery"
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders/${bookingData.orderId}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({
+          status: 'paid',
+          payment_status: 'completed',
+          delivery_status: 'ready for delivery'
+        })
       });
 
       if (response.ok) {
-        alert('🎉 Payment Successful!\n\nYour equipment rental has been confirmed.\nWe will contact you shortly with pickup details.');
+        alert('🎉 Payment Successful!\n\nYour equipment rental has been confirmed and is ready for delivery.\nWe will contact you shortly with pickup details.');
         navigate('/products');
       } else {
         throw new Error('Payment failed');
       }
     } catch (error) {
+      console.error('Payment error:', error);
       alert('❌ Payment failed. Please try again or contact support.');
     } finally {
       setProcessing(false);

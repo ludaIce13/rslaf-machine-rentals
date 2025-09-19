@@ -29,16 +29,34 @@ const Orders = () => {
 
   const getStatusBadge = (status) => {
     const statusStyles = {
-      confirmed: 'bg-blue-100 text-blue-800 border border-blue-200',
-      'picked up': 'bg-green-100 text-green-800 border border-green-200',
-      returned: 'bg-gray-100 text-gray-800 border border-gray-200',
       pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+      paid: 'bg-green-100 text-green-800 border border-green-200',
+      confirmed: 'bg-blue-100 text-blue-800 border border-blue-200',
+      'ready for delivery': 'bg-purple-100 text-purple-800 border border-purple-200',
+      'picked up': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
+      returned: 'bg-gray-100 text-gray-800 border border-gray-200',
       cancelled: 'bg-red-100 text-red-800 border border-red-200'
     };
 
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[status.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
         {status.charAt(0).toUpperCase() + status.slice(1)}
+      </span>
+    );
+  };
+
+  const getDeliveryBadge = (deliveryStatus) => {
+    if (!deliveryStatus) return null;
+    
+    const deliveryStyles = {
+      'ready for delivery': 'bg-green-50 text-green-700 border border-green-200',
+      'out for delivery': 'bg-blue-50 text-blue-700 border border-blue-200',
+      'delivered': 'bg-purple-50 text-purple-700 border border-purple-200'
+    };
+
+    return (
+      <span className={`px-2 py-1 rounded text-xs font-medium ${deliveryStyles[deliveryStatus.toLowerCase()] || 'bg-gray-50 text-gray-700'}`}>
+        📦 {deliveryStatus}
       </span>
     );
   };
@@ -95,10 +113,12 @@ const Orders = () => {
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
         >
           <option>All Statuses</option>
+          <option>Pending</option>
+          <option>Paid</option>
           <option>Confirmed</option>
+          <option>Ready for delivery</option>
           <option>Picked up</option>
           <option>Returned</option>
-          <option>Pending</option>
           <option>Cancelled</option>
         </select>
 
@@ -121,16 +141,16 @@ const Orders = () => {
                   ORDER ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  CUSTOMER
+                  CUSTOMER & EQUIPMENT
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  PERIOD
+                  PERIOD & HOURS
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  STATUS
+                  STATUS & DELIVERY
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  TOTAL
+                  TOTAL & PAYMENT
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   ACTIONS
@@ -152,27 +172,48 @@ const Orders = () => {
                         #SS{order.id.toString().padStart(4, '0')}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-gray-900">
-                        {order.customer?.name || 'Unknown Customer'}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">
+                          {order.customer_info?.name || order.customer?.name || 'Unknown Customer'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {order.product?.name || order.equipment_name || 'Equipment'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {order.customer_info?.email || order.customer?.email || ''}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-gray-900">
-                        {order.start_date && order.end_date ? (
-                          `${new Date(order.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(order.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
-                        ) : (
-                          'No dates'
-                        )}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="text-gray-900">
+                          {order.start_date && order.end_date ? (
+                            `${new Date(order.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${new Date(order.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                          ) : (
+                            'No dates'
+                          )}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {order.total_hours ? `${order.total_hours} hours` : 'Duration not set'}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(order.status)}
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col gap-1">
+                        {getStatusBadge(order.status)}
+                        {getDeliveryBadge(order.delivery_status)}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="font-medium text-gray-900">
-                        ${order.total_amount?.toFixed(2) || '0.00'}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">
+                          ${order.total_price?.toFixed(2) || order.total_amount?.toFixed(2) || '0.00'}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {order.payment_method ? order.payment_method.replace('_', ' ').toUpperCase() : 'Payment pending'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">

@@ -176,21 +176,54 @@ const Booking = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Navigate to payment page with booking data
-    const bookingData = {
-      product,
-      rentalType,
-      startDate,
-      endDate,
-      totalHours: rentalType === 'dateRange' ? calculatedHours : totalHours,
-      totalPrice,
-      customerInfo,
-      paymentMethod
-    };
-    
-    setTimeout(() => {
-      navigate('/payment', { state: bookingData });
-    }, 1000);
+    try {
+      // Create order immediately with "pending" status
+      const orderData = {
+        customer_id: 1,
+        product_id: product.id,
+        rental_type: rentalType,
+        start_date: startDate,
+        end_date: endDate,
+        total_hours: rentalType === 'dateRange' ? calculatedHours : totalHours,
+        total_price: totalPrice,
+        payment_method: paymentMethod,
+        customer_info: customerInfo,
+        status: 'pending'
+      };
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      if (response.ok) {
+        const createdOrder = await response.json();
+        
+        // Navigate to payment page with booking data and order ID
+        const bookingData = {
+          product,
+          rentalType,
+          startDate,
+          endDate,
+          totalHours: rentalType === 'dateRange' ? calculatedHours : totalHours,
+          totalPrice,
+          customerInfo,
+          paymentMethod,
+          orderId: createdOrder.id
+        };
+        
+        setTimeout(() => {
+          navigate('/payment', { state: bookingData });
+        }, 1000);
+      } else {
+        throw new Error('Failed to create order');
+      }
+    } catch (error) {
+      console.error('Order creation error:', error);
+      alert('Failed to create booking. Please try again.');
+      setLoading(false);
+    }
   };
 
   if (!product) {

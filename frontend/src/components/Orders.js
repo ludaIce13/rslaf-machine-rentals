@@ -18,10 +18,19 @@ const Orders = () => {
     setLoading(true);
     try {
       const response = await api.getOrders();
-      setOrders(response.data || []);
+      let apiOrders = response.data || [];
+      
+      // Also get demo orders from localStorage
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      
+      // Combine API orders with demo orders
+      const allOrders = [...apiOrders, ...demoOrders];
+      setOrders(allOrders);
     } catch (error) {
       console.error('Error fetching orders:', error);
-      setOrders([]);
+      // If API fails, just show demo orders
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      setOrders(demoOrders);
     } finally {
       setLoading(false);
     }

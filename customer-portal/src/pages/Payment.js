@@ -7,7 +7,6 @@ const Payment = () => {
   const location = useLocation();
   const bookingData = location.state;
   
-  const [paymentMethod, setPaymentMethod] = useState('card');
   const [processing, setProcessing] = useState(false);
 
   if (!bookingData) {
@@ -24,6 +23,16 @@ const Payment = () => {
     );
   }
 
+  const getPaymentMethodDisplay = (method) => {
+    switch(method) {
+      case 'orange_money': return 'Orange Money';
+      case 'mtn_money': return 'MTN Mobile Money';
+      case 'bank_transfer': return 'Bank Transfer';
+      case 'cash': return 'Cash on Delivery';
+      default: return 'Credit/Debit Card';
+    }
+  };
+
   const handlePayment = async () => {
     setProcessing(true);
     
@@ -37,7 +46,7 @@ const Payment = () => {
         end_date: bookingData.endDate,
         total_hours: bookingData.totalHours,
         total_price: bookingData.totalPrice,
-        payment_method: paymentMethod,
+        payment_method: bookingData.paymentMethod || 'orange_money',
         customer_info: bookingData.customerInfo,
         status: 'confirmed'
       };
@@ -49,13 +58,13 @@ const Payment = () => {
       });
 
       if (response.ok) {
-        alert('Payment successful! Your equipment rental has been confirmed.');
+        alert('🎉 Payment Successful!\n\nYour equipment rental has been confirmed.\nWe will contact you shortly with pickup details.');
         navigate('/products');
       } else {
         throw new Error('Payment failed');
       }
     } catch (error) {
-      alert('Payment failed. Please try again.');
+      alert('❌ Payment failed. Please try again or contact support.');
     } finally {
       setProcessing(false);
     }
@@ -63,67 +72,53 @@ const Payment = () => {
 
   return (
     <div className="payment-container">
+      <button onClick={() => navigate(-1)} className="back-btn">← Back to Booking</button>
+      
       <div className="payment-header">
-        <button onClick={() => navigate(-1)} className="back-btn">← Back</button>
-        <h1>Payment</h1>
+        <h1>Complete Payment</h1>
+        <p className="payment-subtitle">Review your booking and complete the payment</p>
       </div>
 
       <div className="payment-content">
         <div className="booking-summary">
-          <h3>Booking Summary</h3>
+          <h3>📋 Booking Summary</h3>
           <div className="summary-item">
             <span>Equipment:</span>
             <span>{bookingData.product.name}</span>
           </div>
           <div className="summary-item">
+            <span>Customer:</span>
+            <span>{bookingData.customerInfo.name}</span>
+          </div>
+          <div className="summary-item">
             <span>Duration:</span>
             <span>{bookingData.totalHours} hours</span>
           </div>
+          <div className="summary-item">
+            <span>Start Date:</span>
+            <span>{bookingData.startDate}</span>
+          </div>
           <div className="summary-item total">
-            <span>Total:</span>
+            <span>Total Amount:</span>
             <span>${bookingData.totalPrice.toFixed(2)}</span>
           </div>
         </div>
 
-        <div className="payment-methods">
-          <h3>Payment Method</h3>
-          <div className="payment-options">
-            <label className={`payment-option ${paymentMethod === 'card' ? 'selected' : ''}`}>
-              <input 
-                type="radio" 
-                value="card" 
-                checked={paymentMethod === 'card'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <span>Credit/Debit Card</span>
-            </label>
-            <label className={`payment-option ${paymentMethod === 'bank' ? 'selected' : ''}`}>
-              <input 
-                type="radio" 
-                value="bank" 
-                checked={paymentMethod === 'bank'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <span>Bank Transfer</span>
-            </label>
-            <label className={`payment-option ${paymentMethod === 'cash' ? 'selected' : ''}`}>
-              <input 
-                type="radio" 
-                value="cash" 
-                checked={paymentMethod === 'cash'}
-                onChange={(e) => setPaymentMethod(e.target.value)}
-              />
-              <span>Cash on Delivery</span>
-            </label>
+        <div className="payment-method-display">
+          <h3>💳 Payment Method</h3>
+          <div className="selected-method">
+            {getPaymentMethodDisplay(bookingData.paymentMethod)}
           </div>
         </div>
+      </div>
 
+      <div className="payment-actions">
         <button 
           className="pay-btn" 
           onClick={handlePayment}
           disabled={processing}
         >
-          {processing ? 'Processing...' : `Pay $${bookingData.totalPrice.toFixed(2)}`}
+          {processing ? '⏳ Processing Payment...' : `💰 Pay $${bookingData.totalPrice.toFixed(2)}`}
         </button>
       </div>
     </div>

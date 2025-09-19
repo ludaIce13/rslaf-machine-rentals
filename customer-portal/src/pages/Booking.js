@@ -184,7 +184,8 @@ const Booking = () => {
       endDate,
       totalHours: rentalType === 'dateRange' ? calculatedHours : totalHours,
       totalPrice,
-      customerInfo
+      customerInfo,
+      paymentMethod
     };
     
     setTimeout(() => {

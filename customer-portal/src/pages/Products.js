@@ -21,8 +21,9 @@ const Products = () => {
       console.warn('REACT_APP_API_URL not set - using fallback backend URL');
     }
     
-    fetchProducts();
-    fetchInventoryCounts();
+    loadProducts();
+    loadCategories();
+    loadInventoryCounts();
   }, []);
 
   const loadProducts = async () => {

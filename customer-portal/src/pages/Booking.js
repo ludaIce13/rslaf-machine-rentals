@@ -513,7 +513,7 @@ const Booking = () => {
               Cancel
             </button>
             <button type="submit" disabled={loading || totalPrice === 0} className="submit-btn">
-              {loading ? 'Submitting...' : `Submit Booking Request - $${totalPrice.toFixed(2)}`}
+              {loading ? 'Processing...' : `Proceed to Payment - $${totalPrice.toFixed(2)}`}
             </button>
           </div>
         </form>

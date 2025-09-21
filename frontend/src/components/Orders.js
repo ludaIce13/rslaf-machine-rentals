@@ -155,6 +155,12 @@ const Orders = () => {
     );
   };
 
+  const clearDemoOrders = () => {
+    localStorage.removeItem('demoOrders');
+    console.log('🗑️ Demo orders cleared');
+    fetchOrders();
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.id.toString().includes(searchTerm) ||
                          (order.customer_info?.name || order.customer?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||

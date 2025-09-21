@@ -8,21 +8,21 @@ const Home = () => {
   const tips = [
     {
       title: 'How to Choose the Right Construction Equipment for Your Project',
-      image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=1200&h=600&fit=crop&crop=center&auto=format&q=80',
+      image: 'https://www.connectorsupplier.com/wp-content/uploads/Construction-lead-scaled.jpg',
       excerpt: 'Not sure what equipment you need? This guide breaks down the must-have machinery for different project types and how to pick the right tools for the job.',
       linkText: 'Read Guide',
       to: '/tips/choose-equipment'
     },
     {
       title: 'Rent vs. Buy: Why Renting Equipment Makes Sense',
-      image: 'https://images.unsplash.com/photo-1570126618953-d437176e8c79?w=1200&h=600&fit=crop&crop=center&auto=format&q=80',
+      image: 'https://foursite-pape-production.s3.amazonaws.com/construction.papemachinery.com/ae26cab8-fd74-40dd-88d4-706d15b379cf.jpg',
       excerpt: 'Explore the cost benefits of renting versus purchasing equipment and how it can save you money while keeping your projects flexible.',
       linkText: 'Learn More',
       to: '/tips/rent-vs-buy'
     },
     {
       title: 'Tips for Operating Heavy Construction Equipment',
-      image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=1200&h=600&fit=crop&crop=center&auto=format&q=80',
+      image: 'https://larsentoubro-wp-bucket.s3.ap-south-1.amazonaws.com/wp-content/uploads/2021/04/08115108/Home-under-construction-D85-dozer.jpg',
       excerpt: 'Safety is key on any job site. Learn essential tips for operating construction equipment safely and efficiently to prevent accidents and downtime.',
       linkText: 'Safety Tips',
       to: '/tips/safety'

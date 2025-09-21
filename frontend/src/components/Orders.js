@@ -10,8 +10,22 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [dateFilter, setDateFilter] = useState('');
 
+  // Listen for storage changes to refresh orders when new bookings are made
   useEffect(() => {
-    fetchOrders();
+    const handleStorageChange = () => {
+      fetchOrders();
+    };
+
+    // Listen for custom event when orders are updated
+    window.addEventListener('orderUpdated', handleStorageChange);
+
+    // Also listen for storage changes
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('orderUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const fetchOrders = async () => {
@@ -71,9 +85,11 @@ const Orders = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toString().includes(searchTerm) || 
-                         (order.customer?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All Statuses' || order.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesSearch = order.id.toString().includes(searchTerm) ||
+                         (order.customer_info?.name || order.customer?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (order.customer_info?.email || order.customer?.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (order.equipment_name || order.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All Statuses' || order.status?.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
@@ -90,13 +106,24 @@ const Orders = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Orders</h1>
-        <button 
-          onClick={() => navigate('/orders/new')}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700"
-        >
-          <span className="text-lg">+</span>
-          New Order
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={fetchOrders}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
+          <button
+            onClick={() => navigate('/orders/new')}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700"
+          >
+            <span className="text-lg">+</span>
+            New Order
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

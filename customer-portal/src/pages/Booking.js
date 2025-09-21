@@ -188,7 +188,11 @@ const Booking = () => {
         total_price: totalPrice,
         payment_method: paymentMethod,
         customer_info: customerInfo,
-        status: 'pending'
+        status: 'pending',
+        delivery_status: 'pending', // Add delivery status
+        payment_status: 'pending',  // Add payment status
+        equipment_name: product.name, // Add equipment name
+        created_at: new Date().toISOString() // Add creation timestamp
       };
 
       let orderId = Math.floor(Math.random() * 1000) + 1; // Fallback order ID
@@ -211,6 +215,9 @@ const Booking = () => {
         const newOrder = { ...orderData, id: orderId, created_at: new Date().toISOString() };
         demoOrders.push(newOrder);
         localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
+
+        // Trigger event for admin portal to refresh
+        window.dispatchEvent(new Event('orderUpdated'));
       }
       
       // Navigate to payment page with booking data and order ID

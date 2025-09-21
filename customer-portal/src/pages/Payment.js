@@ -61,7 +61,11 @@ const Payment = () => {
           demoOrders[orderIndex].status = 'paid';
           demoOrders[orderIndex].payment_status = 'completed';
           demoOrders[orderIndex].delivery_status = 'ready for delivery';
+          demoOrders[orderIndex].updated_at = new Date().toISOString(); // Add update timestamp
           localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
+
+          // Trigger event for admin portal to refresh
+          window.dispatchEvent(new Event('orderUpdated'));
         }
       }
 

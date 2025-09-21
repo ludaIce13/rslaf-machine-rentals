@@ -10,22 +10,9 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [dateFilter, setDateFilter] = useState('');
 
-  // Listen for storage changes to refresh orders when new bookings are made
+  // Initialize orders on component mount
   useEffect(() => {
-    const handleStorageChange = () => {
-      fetchOrders();
-    };
-
-    // Listen for custom event when orders are updated
-    window.addEventListener('orderUpdated', handleStorageChange);
-
-    // Also listen for storage changes
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('orderUpdated', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    fetchOrders();
   }, []);
 
   const fetchOrders = async () => {

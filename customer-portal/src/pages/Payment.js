@@ -66,6 +66,7 @@ const Payment = () => {
 
           // Trigger event for admin portal to refresh
           window.dispatchEvent(new Event('orderUpdated'));
+          console.log('💰 Payment completed for order:', bookingData.orderId, 'Status updated to paid');
         }
       }
 

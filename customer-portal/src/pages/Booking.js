@@ -218,6 +218,7 @@ const Booking = () => {
 
         // Trigger event for admin portal to refresh
         window.dispatchEvent(new Event('orderUpdated'));
+        console.log('🎉 Order created successfully:', orderId, orderData);
       }
       
       // Navigate to payment page with booking data and order ID

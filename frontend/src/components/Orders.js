@@ -155,11 +155,15 @@ const Orders = () => {
     );
   };
 
-  const clearDemoOrders = () => {
-    localStorage.removeItem('demoOrders');
-    console.log('🗑️ Demo orders cleared');
-    fetchOrders();
-  };
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.id.toString().includes(searchTerm) ||
+                         (order.customer_info?.name || order.customer?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (order.customer_info?.email || order.customer?.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (order.equipment_name || order.product?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'All Statuses' || order.status?.toLowerCase() === statusFilter.toLowerCase();
+    const matchesDate = !dateFilter || (order.start_date && new Date(order.start_date).toDateString() === new Date(dateFilter).toDateString());
+    return matchesSearch && matchesStatus && matchesDate;
+  });
 
   if (loading) {
     return (

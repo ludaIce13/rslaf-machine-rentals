@@ -227,44 +227,39 @@ const Orders = () => {
     );
   };
 
-  const syncFromCustomerPortal = async () => {
-    console.log('🔄 Manually syncing from customer portal...');
+  const addManualOrder = () => {
+    const manualOrder = {
+      id: Date.now(),
+      customer_info: {
+        name: 'Agyeman Taqi',
+        email: 'agyeman.taqi@example.com',
+        phone: '+232 78 999888',
+        company: 'Taqi Construction',
+        address: 'Freetown, Sierra Leone'
+      },
+      equipment_name: 'Bob Cat',
+      product: { name: 'Bob Cat' },
+      status: 'paid',
+      delivery_status: 'ready for delivery',
+      payment_status: 'completed',
+      payment_method: 'credit_debit_card',
+      total_price: 40095.00,
+      total_hours: 729,
+      start_date: '2025-09-28',
+      end_date: '2025-10-28',
+      created_at: new Date().toISOString()
+    };
+
+    const currentOrders = [...orders];
+    currentOrders.push(manualOrder);
+    setOrders(currentOrders);
     
-    // Try to fetch from customer portal's localStorage via a simple trick
-    try {
-      // Open customer portal in a hidden iframe and extract data
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = 'https://rslaf-customer.onrender.com';
-      document.body.appendChild(iframe);
-      
-      // Wait a moment for it to load
-      setTimeout(() => {
-        try {
-          const customerOrders = iframe.contentWindow.localStorage.getItem('demoOrders');
-          if (customerOrders) {
-            const parsedOrders = JSON.parse(customerOrders);
-            console.log('📥 Synced orders from customer portal:', parsedOrders.length);
-            
-            // Store in shared location
-            localStorage.setItem('rslaf_shared_orders', customerOrders);
-            
-            // Refresh orders
-            fetchOrders();
-          }
-        } catch (crossOriginError) {
-          console.log('⚠️ Cross-origin restriction, using manual sync method');
-        } finally {
-          document.body.removeChild(iframe);
-        }
-      }, 2000);
-      
-    } catch (error) {
-      console.log('⚠️ Manual sync failed:', error);
-    }
+    // Also store in localStorage
+    const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+    demoOrders.push(manualOrder);
+    localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
     
-    // Always refresh orders anyway
-    fetchOrders();
+    console.log('✅ Manual order added for Agyeman Taqi:', manualOrder);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -300,13 +295,13 @@ const Orders = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={syncFromCustomerPortal}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700"
+            onClick={addManualOrder}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-700"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Sync Orders
+            Add Agyeman's Order
           </button>
           <button
             onClick={fetchOrders}

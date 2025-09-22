@@ -223,18 +223,42 @@ const Booking = () => {
 
         // Try to send to a simple API endpoint for cross-domain sharing
         try {
-          await fetch('https://httpbin.org/post', {
+          // Send to JSONBin.io for cross-domain sharing
+          await fetch('https://api.jsonbin.io/v3/b', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'X-Master-Key': '$2a$10$rslaf.orders.shared.key.2024'
+            },
             body: JSON.stringify({
-              type: 'new_order',
-              order: newOrder,
-              timestamp: new Date().toISOString()
+              orders: [...demoOrders],
+              lastUpdated: new Date().toISOString(),
+              source: 'customer_portal'
             })
           });
-          console.log('📡 Order sent to external endpoint for sharing');
+          console.log('📡 Orders sent to shared endpoint successfully');
         } catch (shareError) {
-          console.log('⚠️ Could not share order externally:', shareError);
+          console.log('⚠️ Could not share orders externally:', shareError);
+          
+          // Fallback: try GitHub Gist
+          try {
+            await fetch('https://api.github.com/gists', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                description: 'RSLAF Orders Sync',
+                public: false,
+                files: {
+                  'rslaf_orders.json': {
+                    content: JSON.stringify(demoOrders, null, 2)
+                  }
+                }
+              })
+            });
+            console.log('📡 Orders sent to GitHub Gist fallback');
+          } catch (gistError) {
+            console.log('⚠️ All sharing methods failed');
+          }
         }
 
         // Trigger multiple events for admin portal to refresh

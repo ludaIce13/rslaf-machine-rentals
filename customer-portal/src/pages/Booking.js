@@ -564,29 +564,18 @@ const Booking = () => {
                     <div className="payment-logo">🟠</div>
                     <div className="payment-info">
                       <h4>Orange Money</h4>
-                      <p>Mobile money payment</p>
+                      <p>Pay with USSD code</p>
                     </div>
                   </label>
                 </div>
                 
                 <div className="payment-option">
-                  <input type="radio" id="afrimoney" name="paymentMethod" value="afrimoney" checked={paymentMethod === 'afrimoney'} onChange={(e) => setPaymentMethod(e.target.value)} />
+                  <input type="radio" id="afrimoney" name="paymentMethod" value="afri_money" checked={paymentMethod === 'afri_money'} onChange={(e) => setPaymentMethod(e.target.value)} />
                   <label htmlFor="afrimoney" className="payment-card afrimoney">
                     <div className="payment-logo">💜</div>
                     <div className="payment-info">
-                      <h4>AfriMoney</h4>
-                      <p>Digital wallet</p>
-                    </div>
-                  </label>
-                </div>
-                
-                <div className="payment-option">
-                  <input type="radio" id="vult" name="paymentMethod" value="vult" checked={paymentMethod === 'vult'} onChange={(e) => setPaymentMethod(e.target.value)} />
-                  <label htmlFor="vult" className="payment-card vult">
-                    <div className="payment-logo">⚡</div>
-                    <div className="payment-info">
-                      <h4>Vult</h4>
-                      <p>Modern payments</p>
+                      <h4>Afri Money</h4>
+                      <p>Pay with USSD code</p>
                     </div>
                   </label>
                 </div>

@@ -228,25 +228,35 @@ const Orders = () => {
   };
 
   const addManualOrder = () => {
+    const customerName = prompt("Enter customer name:", "");
+    const equipmentName = prompt("Enter equipment name:", "");
+    const totalPrice = parseFloat(prompt("Enter total price:", "0"));
+    const totalHours = parseInt(prompt("Enter total hours:", "8"));
+    
+    if (!customerName || !equipmentName || !totalPrice) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
     const manualOrder = {
       id: Date.now(),
       customer_info: {
-        name: 'Agyeman Taqi',
-        email: 'agyeman.taqi@example.com',
+        name: customerName,
+        email: `${customerName.toLowerCase().replace(' ', '.')}@example.com`,
         phone: '+232 78 999888',
-        company: 'Taqi Construction',
+        company: `${customerName} Company`,
         address: 'Freetown, Sierra Leone'
       },
-      equipment_name: 'Bob Cat',
-      product: { name: 'Bob Cat' },
+      equipment_name: equipmentName,
+      product: { name: equipmentName },
       status: 'paid',
       delivery_status: 'ready for delivery',
       payment_status: 'completed',
       payment_method: 'credit_debit_card',
-      total_price: 40095.00,
-      total_hours: 729,
-      start_date: '2025-09-28',
-      end_date: '2025-10-28',
+      total_price: totalPrice,
+      total_hours: totalHours,
+      start_date: new Date().toISOString().split('T')[0],
+      end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       created_at: new Date().toISOString()
     };
 
@@ -259,7 +269,8 @@ const Orders = () => {
     demoOrders.push(manualOrder);
     localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
     
-    console.log('✅ Manual order added for Agyeman Taqi:', manualOrder);
+    console.log('✅ Manual order added:', manualOrder);
+    alert(`Order added successfully for ${customerName}!`);
   };
 
   const filteredOrders = orders.filter(order => {
@@ -301,7 +312,7 @@ const Orders = () => {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Add Agyeman's Order
+            Add Manual Order
           </button>
           <button
             onClick={fetchOrders}

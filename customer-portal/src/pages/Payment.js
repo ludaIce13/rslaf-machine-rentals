@@ -125,9 +125,9 @@ const Payment = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            service_id: 'YOUR_SERVICE_ID_HERE',  // Replace with your Service ID
-            template_id: 'YOUR_TEMPLATE_ID_HERE', // Replace with your Template ID
-            user_id: 'YOUR_PUBLIC_KEY_HERE',     // Replace with your Public Key
+            service_id: 'service_e7chjko',  // Your Gmail service
+            template_id: 'template_3mw5qwt', // Your order template
+            user_id: 'eYCw2w7EHh4lIJ9zQ',     // Your public key
             template_params: {
               customer_name: bookingData.customerInfo.name,
               customer_email: bookingData.customerInfo.email,
@@ -138,7 +138,7 @@ const Payment = () => {
               total_price: bookingData.totalPrice,
               payment_method: bookingData.paymentMethod,
               order_id: bookingData.orderId,
-              to_email: 'admin@rslaf.com' // Your admin email
+              to_email: 'rslafrentalservice@gmail.com' // Your admin email
             }
           })
         });

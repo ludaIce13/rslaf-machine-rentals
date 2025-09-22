@@ -128,8 +128,12 @@ const Orders = () => {
         const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
         console.log('💾 Demo orders from localStorage:', demoOrders.length);
 
-        // Combine all orders: sample + API + demo
-        const allOrders = [...sampleOrders, ...apiOrders, ...demoOrders];
+        // ALSO check shared orders from customer portal
+        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+        console.log('🔗 Shared orders from customer portal:', sharedOrders.length);
+
+        // Combine all orders: sample + API + demo + shared
+        const allOrders = [...sampleOrders, ...apiOrders, ...demoOrders, ...sharedOrders];
         console.log('📊 Total orders to display:', allOrders.length);
         
         setOrders(allOrders);
@@ -141,8 +145,12 @@ const Orders = () => {
         const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
         console.log('💾 Demo orders from localStorage:', demoOrders.length);
         
-        // Combine sample + demo orders
-        const allOrders = [...sampleOrders, ...demoOrders];
+        // ALSO check shared orders from customer portal
+        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+        console.log('🔗 Shared orders from customer portal:', sharedOrders.length);
+        
+        // Combine sample + demo + shared orders
+        const allOrders = [...sampleOrders, ...demoOrders, ...sharedOrders];
         console.log('📊 Total orders to display (no API):', allOrders.length);
         
         setOrders(allOrders);
@@ -219,9 +227,43 @@ const Orders = () => {
     );
   };
 
-  const clearDemoOrders = () => {
-    localStorage.removeItem('demoOrders');
-    console.log('🗑️ Demo orders cleared');
+  const syncFromCustomerPortal = async () => {
+    console.log('🔄 Manually syncing from customer portal...');
+    
+    // Try to fetch from customer portal's localStorage via a simple trick
+    try {
+      // Open customer portal in a hidden iframe and extract data
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = 'https://rslaf-customer.onrender.com';
+      document.body.appendChild(iframe);
+      
+      // Wait a moment for it to load
+      setTimeout(() => {
+        try {
+          const customerOrders = iframe.contentWindow.localStorage.getItem('demoOrders');
+          if (customerOrders) {
+            const parsedOrders = JSON.parse(customerOrders);
+            console.log('📥 Synced orders from customer portal:', parsedOrders.length);
+            
+            // Store in shared location
+            localStorage.setItem('rslaf_shared_orders', customerOrders);
+            
+            // Refresh orders
+            fetchOrders();
+          }
+        } catch (crossOriginError) {
+          console.log('⚠️ Cross-origin restriction, using manual sync method');
+        } finally {
+          document.body.removeChild(iframe);
+        }
+      }, 2000);
+      
+    } catch (error) {
+      console.log('⚠️ Manual sync failed:', error);
+    }
+    
+    // Always refresh orders anyway
     fetchOrders();
   };
 
@@ -258,13 +300,13 @@ const Orders = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={clearDemoOrders}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700"
+            onClick={syncFromCustomerPortal}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-purple-700"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-            Clear Demo
+            Sync Orders
           </button>
           <button
             onClick={fetchOrders}

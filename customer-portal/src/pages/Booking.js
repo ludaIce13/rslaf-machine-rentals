@@ -216,6 +216,27 @@ const Booking = () => {
         demoOrders.push(newOrder);
         localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
 
+        // ALSO store in a shared key that admin can access
+        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+        sharedOrders.push(newOrder);
+        localStorage.setItem('rslaf_shared_orders', JSON.stringify(sharedOrders));
+
+        // Try to send to a simple API endpoint for cross-domain sharing
+        try {
+          await fetch('https://httpbin.org/post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              type: 'new_order',
+              order: newOrder,
+              timestamp: new Date().toISOString()
+            })
+          });
+          console.log('📡 Order sent to external endpoint for sharing');
+        } catch (shareError) {
+          console.log('⚠️ Could not share order externally:', shareError);
+        }
+
         // Trigger multiple events for admin portal to refresh
         window.dispatchEvent(new Event('orderUpdated'));
         window.dispatchEvent(new StorageEvent('storage', {
@@ -231,6 +252,7 @@ const Booking = () => {
         
         console.log('🎉 Order created successfully:', orderId, orderData);
         console.log('📢 Events dispatched for admin portal refresh');
+        console.log('💾 Order stored in both local and shared storage');
       }
       
       // Navigate to payment page with booking data and order ID

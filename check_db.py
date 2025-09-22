@@ -41,6 +41,14 @@ def check_database():
             for row in cursor.fetchall():
                 print(f"ID: {row[0]}, Email: {row[1]}, Role: {row[2]}")
         
+        # Check products table specifically for image_url
+        if 'products' in [t[0] for t in tables]:
+            print("\nProducts with image_url:")
+            cursor.execute("SELECT id, name, image_url FROM products;")
+            products = cursor.fetchall()
+            for product in products:
+                print(f"ID: {product[0]}, Name: {product[1]}, image_url: '{product[2]}'")
+        
         conn.close()
         
     except Exception as e:

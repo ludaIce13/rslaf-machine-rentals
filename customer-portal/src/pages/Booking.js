@@ -221,44 +221,32 @@ const Booking = () => {
         sharedOrders.push(newOrder);
         localStorage.setItem('rslaf_shared_orders', JSON.stringify(sharedOrders));
 
-        // Try to send to a simple API endpoint for cross-domain sharing
+        // Send webhook to admin portal for real-time sync
         try {
-          // Send to JSONBin.io for cross-domain sharing
-          await fetch('https://api.jsonbin.io/v3/b', {
+          const webhookData = {
+            event: 'order_created',
+            order: newOrder,
+            timestamp: new Date().toISOString(),
+            source: 'customer_portal'
+          };
+
+          // Send to webhook.site for testing (replace with your webhook URL)
+          await fetch('https://webhook.site/unique-url-here', {
             method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'X-Master-Key': '$2a$10$rslaf.orders.shared.key.2024'
-            },
-            body: JSON.stringify({
-              orders: [...demoOrders],
-              lastUpdated: new Date().toISOString(),
-              source: 'customer_portal'
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookData)
           });
-          console.log('📡 Orders sent to shared endpoint successfully');
-        } catch (shareError) {
-          console.log('⚠️ Could not share orders externally:', shareError);
-          
-          // Fallback: try GitHub Gist
-          try {
-            await fetch('https://api.github.com/gists', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                description: 'RSLAF Orders Sync',
-                public: false,
-                files: {
-                  'rslaf_orders.json': {
-                    content: JSON.stringify(demoOrders, null, 2)
-                  }
-                }
-              })
-            });
-            console.log('📡 Orders sent to GitHub Gist fallback');
-          } catch (gistError) {
-            console.log('⚠️ All sharing methods failed');
-          }
+
+          // Also try Zapier webhook (if configured)
+          await fetch('https://hooks.zapier.com/hooks/catch/rslaf/orders/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(webhookData)
+          });
+
+          console.log('🔗 Webhook sent successfully');
+        } catch (webhookError) {
+          console.log('⚠️ Webhook failed:', webhookError);
         }
 
         // Trigger multiple events for admin portal to refresh

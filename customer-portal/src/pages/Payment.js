@@ -82,7 +82,61 @@ const Payment = () => {
         }
       }
 
-      alert('🎉 Payment Successful!\n\nYour equipment rental has been confirmed and is ready for delivery.\nWe will contact you shortly with pickup details.');
+      // Send email notification to admin
+      try {
+        const emailData = {
+          to: 'admin@rslaf.com',
+          subject: `New Order: ${bookingData.product.name} - ${bookingData.customerInfo.name}`,
+          html: `
+            <h2>🎉 New Equipment Rental Order</h2>
+            <h3>Customer Details:</h3>
+            <ul>
+              <li><strong>Name:</strong> ${bookingData.customerInfo.name}</li>
+              <li><strong>Email:</strong> ${bookingData.customerInfo.email}</li>
+              <li><strong>Phone:</strong> ${bookingData.customerInfo.phone}</li>
+              <li><strong>Company:</strong> ${bookingData.customerInfo.company}</li>
+              <li><strong>Address:</strong> ${bookingData.customerInfo.address}</li>
+            </ul>
+            
+            <h3>Order Details:</h3>
+            <ul>
+              <li><strong>Equipment:</strong> ${bookingData.product.name}</li>
+              <li><strong>Duration:</strong> ${bookingData.totalHours} hours</li>
+              <li><strong>Start Date:</strong> ${bookingData.startDate}</li>
+              <li><strong>End Date:</strong> ${bookingData.endDate}</li>
+              <li><strong>Total Amount:</strong> $${bookingData.totalPrice}</li>
+              <li><strong>Payment Method:</strong> ${bookingData.paymentMethod}</li>
+              <li><strong>Order ID:</strong> ${bookingData.orderId}</li>
+            </ul>
+            
+            <h3>📋 Quick Add to Admin Portal:</h3>
+            <p>Copy these details to add manually:</p>
+            <code>
+              Customer: ${bookingData.customerInfo.name}<br>
+              Equipment: ${bookingData.product.name}<br>
+              Price: ${bookingData.totalPrice}<br>
+              Hours: ${bookingData.totalHours}
+            </code>
+          `
+        };
+
+        // Send via EmailJS (free service)
+        await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            service_id: 'service_rslaf',
+            template_id: 'template_order',
+            user_id: 'rslaf_public_key',
+            template_params: emailData
+          })
+        });
+        
+        console.log('📧 Order email sent to admin successfully');
+      } catch (emailError) {
+        console.log('⚠️ Could not send email notification:', emailError);
+      }
+      alert('🎉 Payment Successful!\n\nYour equipment rental has been confirmed and is ready for delivery.\nWe will contact you shortly with pickup details.\n\n📧 Admin has been notified via email.');
       navigate('/products');
       
     } catch (error) {

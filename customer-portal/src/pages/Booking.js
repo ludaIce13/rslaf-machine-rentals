@@ -216,9 +216,21 @@ const Booking = () => {
         demoOrders.push(newOrder);
         localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
 
-        // Trigger event for admin portal to refresh
+        // Trigger multiple events for admin portal to refresh
         window.dispatchEvent(new Event('orderUpdated'));
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'demoOrders',
+          newValue: JSON.stringify(demoOrders),
+          url: window.location.href
+        }));
+        
+        // Also try to notify parent window if in iframe
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'orderUpdated', data: newOrder }, '*');
+        }
+        
         console.log('🎉 Order created successfully:', orderId, orderData);
+        console.log('📢 Events dispatched for admin portal refresh');
       }
       
       // Navigate to payment page with booking data and order ID

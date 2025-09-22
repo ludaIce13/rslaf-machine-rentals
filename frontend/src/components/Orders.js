@@ -10,9 +10,39 @@ const Orders = () => {
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [dateFilter, setDateFilter] = useState('');
 
-  // Initialize orders on component mount
+  // Initialize orders on component mount and listen for updates
   useEffect(() => {
     fetchOrders();
+    
+    // Listen for storage changes from customer portal
+    const handleStorageChange = (e) => {
+      if (e.key === 'demoOrders' || e.type === 'orderUpdated') {
+        console.log('🔔 Order update detected, refreshing...');
+        fetchOrders();
+      }
+    };
+
+    // Listen for custom events from customer portal
+    const handleOrderUpdate = () => {
+      console.log('🔔 Custom order update event received, refreshing...');
+      fetchOrders();
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('orderUpdated', handleOrderUpdate);
+    
+    // Poll for updates every 5 seconds
+    const pollInterval = setInterval(() => {
+      console.log('🔄 Polling for order updates...');
+      fetchOrders();
+    }, 5000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('orderUpdated', handleOrderUpdate);
+      clearInterval(pollInterval);
+    };
   }, []);
 
   const fetchOrders = async () => {

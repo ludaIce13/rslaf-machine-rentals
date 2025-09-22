@@ -64,9 +64,21 @@ const Payment = () => {
           demoOrders[orderIndex].updated_at = new Date().toISOString(); // Add update timestamp
           localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
 
-          // Trigger event for admin portal to refresh
+          // Trigger multiple events for admin portal to refresh
           window.dispatchEvent(new Event('orderUpdated'));
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'demoOrders',
+            newValue: JSON.stringify(demoOrders),
+            url: window.location.href
+          }));
+          
+          // Also try to notify parent window if in iframe
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'paymentCompleted', orderId: bookingData.orderId }, '*');
+          }
+          
           console.log('💰 Payment completed for order:', bookingData.orderId, 'Status updated to paid');
+          console.log('📢 Payment events dispatched for admin portal refresh');
         }
       }
 

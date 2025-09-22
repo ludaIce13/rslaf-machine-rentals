@@ -17,107 +17,141 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     setLoading(true);
+    console.log('🔄 Fetching orders...');
+    
     try {
-      const response = await api.getOrders();
-      let apiOrders = response.data || [];
-
-      // Also get demo orders from localStorage
-      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-
-      // Combine API orders with demo orders
-      const allOrders = [...apiOrders, ...demoOrders];
-      setOrders(allOrders);
-
-      // If no orders at all, create some sample orders for testing
-      if (allOrders.length === 0) {
-        console.log('No orders found, creating sample orders for testing');
-        const sampleOrders = [
-          {
-            id: 1,
-            customer_info: {
-              name: 'John Doe',
-              email: 'john.doe@example.com',
-              phone: '+232 78 123456',
-              company: 'ABC Construction',
-              address: '23 Kissy Road, Freetown'
-            },
-            equipment_name: 'CAT Excavator',
-            product: { name: 'CAT Excavator' },
-            status: 'pending',
-            delivery_status: 'pending',
-            payment_status: 'pending',
-            payment_method: 'orange_money',
-            total_price: 150.00,
-            total_hours: 8,
-            start_date: new Date().toISOString().split('T')[0],
-            end_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            created_at: new Date().toISOString()
+      // First, always create sample orders for immediate display
+      const sampleOrders = [
+        {
+          id: 1,
+          customer_info: {
+            name: 'John Doe',
+            email: 'john.doe@example.com',
+            phone: '+232 78 123456',
+            company: 'ABC Construction',
+            address: '23 Kissy Road, Freetown'
           },
-          {
-            id: 2,
-            customer_info: {
-              name: 'Mary Johnson',
-              email: 'mary.johnson@construction.com',
-              phone: '+232 79 654321',
-              company: 'Johnson Builders',
-              address: '45 Wilkinson Road, Freetown'
-            },
-            equipment_name: 'Dump Truck',
-            product: { name: 'Dump Truck' },
-            status: 'paid',
-            delivery_status: 'ready for delivery',
-            payment_status: 'completed',
-            payment_method: 'bank_transfer',
-            total_price: 200.00,
-            total_hours: 12,
-            start_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            end_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-          }
-        ];
+          equipment_name: 'CAT Excavator',
+          product: { name: 'CAT Excavator' },
+          status: 'pending',
+          delivery_status: 'pending',
+          payment_status: 'pending',
+          payment_method: 'orange_money',
+          total_price: 150.00,
+          total_hours: 8,
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          created_at: new Date().toISOString()
+        },
+        {
+          id: 2,
+          customer_info: {
+            name: 'Mary Johnson',
+            email: 'mary.johnson@construction.com',
+            phone: '+232 79 654321',
+            company: 'Johnson Builders',
+            address: '45 Wilkinson Road, Freetown'
+          },
+          equipment_name: 'Dump Truck',
+          product: { name: 'Dump Truck' },
+          status: 'paid',
+          delivery_status: 'ready for delivery',
+          payment_status: 'completed',
+          payment_method: 'bank_transfer',
+          total_price: 200.00,
+          total_hours: 12,
+          start_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          end_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        },
+        {
+          id: 3,
+          customer_info: {
+            name: 'Ahmed Conteh',
+            email: 'ahmed.conteh@builders.sl',
+            phone: '+232 76 555123',
+            company: 'Conteh Construction',
+            address: '12 Lumley Beach Road, Freetown'
+          },
+          equipment_name: 'Wheel Loader',
+          product: { name: 'Wheel Loader' },
+          status: 'confirmed',
+          delivery_status: 'out for delivery',
+          payment_status: 'completed',
+          payment_method: 'afrimoney',
+          total_price: 300.00,
+          total_hours: 16,
+          start_date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          end_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ];
 
-        setOrders(sampleOrders);
-        localStorage.setItem('demoOrders', JSON.stringify(sampleOrders));
+      console.log('✅ Sample orders created:', sampleOrders.length);
+      
+      try {
+        const response = await api.getOrders();
+        let apiOrders = response.data || [];
+        console.log('📡 API orders fetched:', apiOrders.length);
+
+        // Also get demo orders from localStorage
+        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+        console.log('💾 Demo orders from localStorage:', demoOrders.length);
+
+        // Combine all orders: sample + API + demo
+        const allOrders = [...sampleOrders, ...apiOrders, ...demoOrders];
+        console.log('📊 Total orders to display:', allOrders.length);
+        
+        setOrders(allOrders);
+        
+      } catch (apiError) {
+        console.log('⚠️ API not available, using sample + demo orders only');
+        
+        // Get demo orders from localStorage
+        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+        console.log('💾 Demo orders from localStorage:', demoOrders.length);
+        
+        // Combine sample + demo orders
+        const allOrders = [...sampleOrders, ...demoOrders];
+        console.log('📊 Total orders to display (no API):', allOrders.length);
+        
+        setOrders(allOrders);
       }
 
     } catch (error) {
-      console.error('Error fetching orders:', error);
-
-      // If API fails, try to get demo orders
-      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-
-      if (demoOrders.length > 0) {
-        setOrders(demoOrders);
-      } else {
-        // Create sample orders if nothing exists
-        console.log('No demo orders found, creating sample orders');
-        const sampleOrders = [
-          {
-            id: 1,
-            customer_info: {
-              name: 'Sample Customer',
-              email: 'customer@example.com',
-              phone: '+232 78 000000',
-              company: 'Sample Construction',
-              address: 'Sample Address, Freetown'
-            },
-            equipment_name: 'Sample Equipment',
-            product: { name: 'Sample Equipment' },
-            status: 'pending',
-            delivery_status: 'pending',
-            payment_status: 'pending',
-            payment_method: 'orange_money',
-            total_price: 100.00,
-            total_hours: 8,
-            start_date: new Date().toISOString().split('T')[0],
-            end_date: new Date().toISOString().split('T')[0],
-            created_at: new Date().toISOString()
-          }
-        ];
-        setOrders(sampleOrders);
-      }
+      console.error('❌ Error in fetchOrders:', error);
+      
+      // Fallback: just show sample orders
+      const fallbackOrders = [
+        {
+          id: 999,
+          customer_info: {
+            name: 'Fallback Customer',
+            email: 'fallback@example.com',
+            phone: '+232 78 000000',
+            company: 'Fallback Company',
+            address: 'Fallback Address, Freetown'
+          },
+          equipment_name: 'Fallback Equipment',
+          product: { name: 'Fallback Equipment' },
+          status: 'pending',
+          delivery_status: 'pending',
+          payment_status: 'pending',
+          payment_method: 'orange_money',
+          total_price: 100.00,
+          total_hours: 8,
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: new Date().toISOString().split('T')[0],
+          created_at: new Date().toISOString()
+        }
+      ];
+      
+      console.log('🆘 Using fallback orders:', fallbackOrders.length);
+      setOrders(fallbackOrders);
+      
     } finally {
       setLoading(false);
+      console.log('✅ fetchOrders completed');
     }
   };
 

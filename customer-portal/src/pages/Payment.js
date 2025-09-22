@@ -8,6 +8,11 @@ const Payment = () => {
   const bookingData = location.state;
   
   const [processing, setProcessing] = useState(false);
+  const [paymentStep, setPaymentStep] = useState('initial'); // 'initial', 'ussd', 'checking', 'completed'
+  const [ussdCode, setUssdCode] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [paymentStatus, setPaymentStatus] = useState('');
+  const [statusCheckInterval, setStatusCheckInterval] = useState(null);
 
   if (!bookingData) {
     return (
@@ -26,14 +31,109 @@ const Payment = () => {
   const getPaymentMethodDisplay = (method) => {
     switch(method) {
       case 'orange_money': return 'Orange Money';
-      case 'mtn_money': return 'MTN Mobile Money';
+      case 'afri_money': return 'Afri Money';
       case 'bank_transfer': return 'Bank Transfer';
       case 'cash': return 'Cash on Delivery';
       default: return 'Credit/Debit Card';
     }
   };
 
+  const initiateUnPuntoPayment = async () => {
+    setProcessing(true);
+    setPaymentStep('ussd');
+    
+    try {
+      const response = await fetch('https://odprta-tocka.onrender.com/api/initiate-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'RSLAF-Equipment-Rental',
+          amount: parseFloat(bookingData.totalPrice)
+        })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.reqstatus === 'completed') {
+        setUssdCode(data.ussdCode);
+        setTransactionId(data.transactionId);
+        setPaymentStep('ussd');
+        
+        // Start checking payment status after 30 seconds
+        setTimeout(() => {
+          startStatusChecking();
+        }, 30000);
+        
+      } else {
+        throw new Error(data.message || 'Failed to initiate payment');
+      }
+    } catch (error) {
+      console.error('Un Punto payment error:', error);
+      alert(`Payment initiation failed: ${error.message}`);
+      setPaymentStep('initial');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const startStatusChecking = () => {
+    setPaymentStep('checking');
+    
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`https://odprta-tocka.onrender.com/payment-status/RSLAF-Equipment-Rental/${transactionId}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          setPaymentStatus(data.paymentStatus);
+          
+          if (data.paymentStatus === 'completed') {
+            clearInterval(interval);
+            setStatusCheckInterval(null);
+            await completePayment();
+          } else if (data.paymentStatus === 'expired' || data.paymentStatus === 'cancelled' || data.paymentStatus === 'failed') {
+            clearInterval(interval);
+            setStatusCheckInterval(null);
+            alert(`Payment ${data.paymentStatus}. Please try again.`);
+            setPaymentStep('initial');
+          }
+        }
+      } catch (error) {
+        console.error('Status check error:', error);
+      }
+    }, 10000); // Check every 10 seconds
+    
+    setStatusCheckInterval(interval);
+    
+    // Stop checking after 15 minutes (USSD code expires)
+    setTimeout(() => {
+      if (interval) {
+        clearInterval(interval);
+        setStatusCheckInterval(null);
+        if (paymentStep === 'checking') {
+          alert('Payment timeout. Please try again.');
+          setPaymentStep('initial');
+        }
+      }
+    }, 15 * 60 * 1000);
+  };
+
+  const completePayment = async () => {
+    setPaymentStep('completed');
+    await handlePaymentSuccess();
+  };
+
   const handlePayment = async () => {
+    // Check if this is a local payment method (Orange Money or Afri Money)
+    if (bookingData.paymentMethod === 'orange_money' || bookingData.paymentMethod === 'afri_money') {
+      await initiateUnPuntoPayment();
+    } else {
+      // Handle other payment methods (existing logic)
+      await handlePaymentSuccess();
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
     setProcessing(true);
     
     try {
@@ -200,14 +300,86 @@ const Payment = () => {
         </div>
       </div>
 
+      {/* Un Punto Payment Steps */}
+      {(bookingData.paymentMethod === 'orange_money' || bookingData.paymentMethod === 'afri_money') && paymentStep !== 'initial' && (
+        <div className="unpunto-payment-steps">
+          {paymentStep === 'ussd' && (
+            <div className="ussd-step">
+              <h3>📱 Complete Payment with USSD</h3>
+              <div className="ussd-code-display">
+                <p>Dial this USSD code on your phone:</p>
+                <div className="ussd-code">{ussdCode}</div>
+                <p className="ussd-instructions">
+                  • Dial the code on your {bookingData.paymentMethod === 'orange_money' ? 'Orange Money' : 'Afri Money'} registered phone<br/>
+                  • Follow the prompts to complete payment<br/>
+                  • Code expires in 15 minutes
+                </p>
+              </div>
+              <button 
+                className="check-status-btn" 
+                onClick={startStatusChecking}
+                disabled={processing}
+              >
+                ✅ I've completed the payment - Check Status
+              </button>
+            </div>
+          )}
+
+          {paymentStep === 'checking' && (
+            <div className="checking-step">
+              <h3>🔄 Checking Payment Status</h3>
+              <div className="status-checking">
+                <div className="spinner"></div>
+                <p>Verifying your payment...</p>
+                <p className="status-text">Status: {paymentStatus || 'pending'}</p>
+                <p className="wait-message">This may take a few moments. Please wait...</p>
+              </div>
+            </div>
+          )}
+
+          {paymentStep === 'completed' && (
+            <div className="completed-step">
+              <h3>✅ Payment Successful!</h3>
+              <div className="success-message">
+                <p>Your payment has been confirmed!</p>
+                <p>Redirecting to equipment catalog...</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="payment-actions">
-        <button 
-          className="pay-btn" 
-          onClick={handlePayment}
-          disabled={processing}
-        >
-          {processing ? '⏳ Processing Payment...' : `💰 Pay $${bookingData.totalPrice.toFixed(2)}`}
-        </button>
+        {paymentStep === 'initial' && (
+          <button 
+            className="pay-btn" 
+            onClick={handlePayment}
+            disabled={processing}
+          >
+            {processing ? '⏳ Processing Payment...' : 
+             (bookingData.paymentMethod === 'orange_money' || bookingData.paymentMethod === 'afri_money') ? 
+             `📱 Pay $${bookingData.totalPrice.toFixed(2)} with ${getPaymentMethodDisplay(bookingData.paymentMethod)}` :
+             `💰 Pay $${bookingData.totalPrice.toFixed(2)}`}
+          </button>
+        )}
+        
+        {paymentStep !== 'initial' && paymentStep !== 'completed' && (
+          <button 
+            className="cancel-btn" 
+            onClick={() => {
+              if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+                setStatusCheckInterval(null);
+              }
+              setPaymentStep('initial');
+              setUssdCode('');
+              setTransactionId('');
+              setPaymentStatus('');
+            }}
+          >
+            Cancel Payment
+          </button>
+        )}
       </div>
     </div>
   );

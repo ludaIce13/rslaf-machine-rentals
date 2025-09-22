@@ -32,16 +32,16 @@ const Orders = () => {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('orderUpdated', handleOrderUpdate);
     
-    // Poll for updates every 5 seconds
-    const pollInterval = setInterval(() => {
-      console.log('🔄 Polling for order updates...');
-      fetchOrders();
-    }, 5000);
+    // REMOVED: Auto-polling that was causing constant refresh
+    // const pollInterval = setInterval(() => {
+    //   console.log('🔄 Polling for order updates...');
+    //   fetchOrders();
+    // }, 5000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('orderUpdated', handleOrderUpdate);
-      clearInterval(pollInterval);
+      // clearInterval(pollInterval); // No longer needed
     };
   }, []);
 

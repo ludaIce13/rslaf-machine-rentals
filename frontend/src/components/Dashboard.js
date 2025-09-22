@@ -15,39 +15,85 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadDashboardData();
+    
+    // Listen for order updates to refresh dashboard
+    const handleOrderUpdate = () => {
+      console.log('🔔 Dashboard - Order update detected, refreshing stats...');
+      loadDashboardData();
+    };
+
+    // Add event listeners for order updates
+    window.addEventListener('storage', handleOrderUpdate);
+    window.addEventListener('orderUpdated', handleOrderUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleOrderUpdate);
+      window.removeEventListener('orderUpdated', handleOrderUpdate);
+    };
   }, []);
 
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [ordersRes, productsRes, customersRes] = await Promise.all([
-        getOrders().catch(() => ({ data: [] })),
-        getProducts().catch(() => ({ data: [] })),
-        getCustomers().catch(() => ({ data: [] }))
-      ]);
+      // Get orders from multiple sources like the Orders component does
+      let allOrders = [];
 
-      const orders = ordersRes.data || [];
-      const products = productsRes.data || [];
-      const customers = customersRes.data || [];
+      try {
+        const response = await getOrders();
+        let apiOrders = response.data || [];
+        allOrders = [...allOrders, ...apiOrders];
+      } catch (apiError) {
+        console.log('⚠️ API not available for dashboard');
+      }
 
-      // Calculate real stats from API data
-      const activeRentals = orders.filter(order => 
-        order.status === 'confirmed' || order.status === 'pending'
-      ).length;
-      
-      const totalRevenue = orders.reduce((sum, order) => 
-        sum + (parseFloat(order.total_amount) || 0), 0
-      );
+      // Get demo orders from localStorage (for manually added orders)
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      console.log('💾 Dashboard - Demo orders from localStorage:', demoOrders.length);
 
-      setStats({
-        totalRentals: orders.length,
-        activeRentals,
-        totalRevenue,
-        totalProducts: products.length,
-        totalCustomers: customers.length
+      // ALSO check shared orders from customer portal
+      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+      console.log('🔗 Dashboard - Shared orders from customer portal:', sharedOrders.length);
+
+      // Combine all real orders (same as Orders component)
+      allOrders = [...allOrders, ...demoOrders, ...sharedOrders];
+      console.log('📊 Dashboard - Total orders to analyze:', allOrders.length);
+
+      // Extract unique customers from orders
+      const uniqueCustomers = new Set();
+      allOrders.forEach(order => {
+        const customerName = order.customer_info?.name || order.customer?.name || order.customer_id;
+        if (customerName) {
+          uniqueCustomers.add(customerName);
+        }
       });
 
-      setRecentOrders(orders.slice(0, 5));
+      // Calculate real stats from actual order data
+      const activeRentals = allOrders.filter(order => 
+        order.status === 'confirmed' || order.status === 'pending' || order.status === 'paid'
+      ).length;
+      
+      const totalRevenue = allOrders.reduce((sum, order) => 
+        sum + (parseFloat(order.total_price) || parseFloat(order.total_amount) || 0), 0
+      );
+
+      // Get products (static for now)
+      let totalProducts = 6; // Default product count
+      try {
+        const productsRes = await getProducts();
+        totalProducts = productsRes.data?.length || 6;
+      } catch (error) {
+        console.log('Using default product count');
+      }
+
+      setStats({
+        totalRentals: allOrders.length,
+        activeRentals,
+        totalRevenue,
+        totalProducts,
+        totalCustomers: uniqueCustomers.size
+      });
+
+      setRecentOrders(allOrders.slice(0, 5));
     } catch (error) {
       console.error('Error loading dashboard data:', error);
       // Keep zero stats on error
@@ -55,7 +101,7 @@ const Dashboard = () => {
         totalRentals: 0,
         activeRentals: 0,
         totalRevenue: 0,
-        totalProducts: 0,
+        totalProducts: 6, // Default products
         totalCustomers: 0
       });
       setRecentOrders([]);
@@ -243,7 +289,9 @@ const Dashboard = () => {
                         #{order.id}
                       </Link>
                     </td>
-                    <td className="py-3 px-4 text-gray-900">{order.customer_id}</td>
+                    <td className="py-3 px-4 text-gray-900">
+                      {order.customer_info?.name || order.customer?.name || order.customer_id || 'Unknown Customer'}
+                    </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                         order.status === 'confirmed' ? 'bg-green-100 text-green-800' :

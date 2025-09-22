@@ -21,8 +21,70 @@ const Customers = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      const response = await api.getCustomers();
-      setCustomers(response.data || []);
+      // Get customers from orders data (same approach as dashboard)
+      let allOrders = [];
+
+      try {
+        const response = await api.getOrders();
+        let apiOrders = response.data || [];
+        allOrders = [...allOrders, ...apiOrders];
+      } catch (apiError) {
+        console.log('⚠️ API not available for customers');
+      }
+
+      // Get demo orders from localStorage (for manually added orders)
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      console.log('💾 Customers - Demo orders from localStorage:', demoOrders.length);
+
+      // ALSO check shared orders from customer portal
+      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+      console.log('🔗 Customers - Shared orders from customer portal:', sharedOrders.length);
+
+      // Combine all real orders
+      allOrders = [...allOrders, ...demoOrders, ...sharedOrders];
+      console.log('📊 Customers - Total orders to analyze:', allOrders.length);
+
+      // Extract unique customers from orders
+      const customersMap = new Map();
+      allOrders.forEach(order => {
+        const customerInfo = order.customer_info || order.customer || {};
+        const customerName = customerInfo.name || order.customer_id;
+        const customerEmail = customerInfo.email || `${customerName?.toLowerCase().replace(' ', '.')}@example.com`;
+        const customerPhone = customerInfo.phone || '+232 78 000000';
+        
+        if (customerName) {
+          if (!customersMap.has(customerName)) {
+            customersMap.set(customerName, {
+              id: customerName.toLowerCase().replace(' ', '_'),
+              name: customerName,
+              email: customerEmail,
+              phone: customerPhone,
+              company: customerInfo.company || `${customerName} Company`,
+              address: customerInfo.address || 'Freetown, Sierra Leone',
+              customerSince: new Date(order.created_at || Date.now()).toLocaleDateString(),
+              lastRental: new Date(order.created_at || Date.now()).toLocaleDateString(),
+              totalOrders: 0,
+              totalSpent: 0,
+              rentalHistory: []
+            });
+          }
+          
+          const customer = customersMap.get(customerName);
+          customer.totalOrders += 1;
+          customer.totalSpent += parseFloat(order.total_price || order.total_amount || 0);
+          customer.rentalHistory.push({
+            id: `#${order.id}`,
+            product: order.equipment_name || order.product?.name || 'Equipment',
+            dates: `${new Date(order.start_date || order.created_at).toLocaleDateString()} - ${new Date(order.end_date || order.created_at).toLocaleDateString()}`,
+            status: order.status || 'completed',
+            amount: parseFloat(order.total_price || order.total_amount || 0)
+          });
+        }
+      });
+
+      const customersArray = Array.from(customersMap.values());
+      console.log('👥 Extracted customers:', customersArray.length);
+      setCustomers(customersArray);
     } catch (error) {
       console.error('Error fetching customers:', error);
       setCustomers([]);

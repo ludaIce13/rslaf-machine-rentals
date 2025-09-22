@@ -219,6 +219,14 @@ const Orders = () => {
     demoOrders.push(manualOrder);
     localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
     
+    // Trigger dashboard update
+    window.dispatchEvent(new Event('orderUpdated'));
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: 'demoOrders',
+      newValue: JSON.stringify(demoOrders),
+      url: window.location.href
+    }));
+    
     console.log('✅ Manual order added:', manualOrder);
     alert(`Order added successfully for ${customerName}!`);
   };

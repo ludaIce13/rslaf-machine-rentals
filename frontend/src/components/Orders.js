@@ -50,143 +50,36 @@ const Orders = () => {
     console.log('🔄 Fetching orders...');
     
     try {
-      // First, always create sample orders for immediate display
-      const sampleOrders = [
-        {
-          id: 1,
-          customer_info: {
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            phone: '+232 78 123456',
-            company: 'ABC Construction',
-            address: '23 Kissy Road, Freetown'
-          },
-          equipment_name: 'CAT Excavator',
-          product: { name: 'CAT Excavator' },
-          status: 'pending',
-          delivery_status: 'pending',
-          payment_status: 'pending',
-          payment_method: 'orange_money',
-          total_price: 150.00,
-          total_hours: 8,
-          start_date: new Date().toISOString().split('T')[0],
-          end_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          created_at: new Date().toISOString()
-        },
-        {
-          id: 2,
-          customer_info: {
-            name: 'Mary Johnson',
-            email: 'mary.johnson@construction.com',
-            phone: '+232 79 654321',
-            company: 'Johnson Builders',
-            address: '45 Wilkinson Road, Freetown'
-          },
-          equipment_name: 'Dump Truck',
-          product: { name: 'Dump Truck' },
-          status: 'paid',
-          delivery_status: 'ready for delivery',
-          payment_status: 'completed',
-          payment_method: 'bank_transfer',
-          total_price: 200.00,
-          total_hours: 12,
-          start_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          end_date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        {
-          id: 3,
-          customer_info: {
-            name: 'Ahmed Conteh',
-            email: 'ahmed.conteh@builders.sl',
-            phone: '+232 76 555123',
-            company: 'Conteh Construction',
-            address: '12 Lumley Beach Road, Freetown'
-          },
-          equipment_name: 'Wheel Loader',
-          product: { name: 'Wheel Loader' },
-          status: 'confirmed',
-          delivery_status: 'out for delivery',
-          payment_status: 'completed',
-          payment_method: 'afrimoney',
-          total_price: 300.00,
-          total_hours: 16,
-          start_date: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          end_date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
-        }
-      ];
+      // Start with empty array for clean presentation
+      let allOrders = [];
 
-      console.log('✅ Sample orders created:', sampleOrders.length);
-      
       try {
         const response = await api.getOrders();
         let apiOrders = response.data || [];
         console.log('📡 API orders fetched:', apiOrders.length);
-
-        // Also get demo orders from localStorage
-        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-        console.log('💾 Demo orders from localStorage:', demoOrders.length);
-
-        // ALSO check shared orders from customer portal
-        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-        console.log('🔗 Shared orders from customer portal:', sharedOrders.length);
-
-        // Combine all orders: sample + API + demo + shared
-        const allOrders = [...sampleOrders, ...apiOrders, ...demoOrders, ...sharedOrders];
-        console.log('📊 Total orders to display:', allOrders.length);
-        
-        setOrders(allOrders);
-        
+        allOrders = [...allOrders, ...apiOrders];
       } catch (apiError) {
-        console.log('⚠️ API not available, using sample + demo orders only');
-        
-        // Get demo orders from localStorage
-        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-        console.log('💾 Demo orders from localStorage:', demoOrders.length);
-        
-        // ALSO check shared orders from customer portal
-        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-        console.log('🔗 Shared orders from customer portal:', sharedOrders.length);
-        
-        // Combine sample + demo + shared orders
-        const allOrders = [...sampleOrders, ...demoOrders, ...sharedOrders];
-        console.log('📊 Total orders to display (no API):', allOrders.length);
-        
-        setOrders(allOrders);
+        console.log('⚠️ API not available');
       }
+
+      // Get demo orders from localStorage (for manually added orders)
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      console.log('💾 Demo orders from localStorage:', demoOrders.length);
+
+      // ALSO check shared orders from customer portal
+      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+      console.log('🔗 Shared orders from customer portal:', sharedOrders.length);
+
+      // Combine all real orders (no sample data for presentation)
+      allOrders = [...allOrders, ...demoOrders, ...sharedOrders];
+      console.log('📊 Total orders to display:', allOrders.length);
+      
+      setOrders(allOrders);
 
     } catch (error) {
       console.error('❌ Error in fetchOrders:', error);
-      
-      // Fallback: just show sample orders
-      const fallbackOrders = [
-        {
-          id: 999,
-          customer_info: {
-            name: 'Fallback Customer',
-            email: 'fallback@example.com',
-            phone: '+232 78 000000',
-            company: 'Fallback Company',
-            address: 'Fallback Address, Freetown'
-          },
-          equipment_name: 'Fallback Equipment',
-          product: { name: 'Fallback Equipment' },
-          status: 'pending',
-          delivery_status: 'pending',
-          payment_status: 'pending',
-          payment_method: 'orange_money',
-          total_price: 100.00,
-          total_hours: 8,
-          start_date: new Date().toISOString().split('T')[0],
-          end_date: new Date().toISOString().split('T')[0],
-          created_at: new Date().toISOString()
-        }
-      ];
-      
-      console.log('🆘 Using fallback orders:', fallbackOrders.length);
-      setOrders(fallbackOrders);
-      
+      // For presentation, start with empty list if there are errors
+      setOrders([]);
     } finally {
       setLoading(false);
       console.log('✅ fetchOrders completed');
@@ -225,6 +118,63 @@ const Orders = () => {
         📦 {deliveryStatus}
       </span>
     );
+  };
+
+  const handleViewOrder = (order) => {
+    alert(`Order Details:\n\nCustomer: ${order.customer_info?.name || order.customer?.name}\nEquipment: ${order.equipment_name || order.product?.name}\nAmount: $${order.total_price}\nStatus: ${order.status}\nOrder ID: ${order.id}`);
+  };
+
+  const handleEditOrder = (order) => {
+    const newStatus = prompt(`Update status for ${order.customer_info?.name || order.customer?.name}:\n\nCurrent: ${order.status}\n\nEnter new status (pending, paid, confirmed, delivered):`, order.status);
+    
+    if (newStatus && newStatus !== order.status) {
+      // Update order in the orders array
+      const updatedOrders = orders.map(o => 
+        o.id === order.id 
+          ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
+          : o
+      );
+      setOrders(updatedOrders);
+      
+      // Update in localStorage
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      const updatedDemoOrders = demoOrders.map(o => 
+        o.id === order.id 
+          ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
+          : o
+      );
+      localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
+      
+      console.log(`✅ Order ${order.id} status updated to: ${newStatus}`);
+    }
+  };
+
+  const handleDeleteOrder = (order) => {
+    const confirmDelete = window.confirm(`Are you sure you want to delete this order?\n\nCustomer: ${order.customer_info?.name || order.customer?.name}\nEquipment: ${order.equipment_name || order.product?.name}\nAmount: $${order.total_price}`);
+    
+    if (confirmDelete) {
+      // Remove from orders array
+      const updatedOrders = orders.filter(o => o.id !== order.id);
+      setOrders(updatedOrders);
+      
+      // Remove from localStorage
+      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+      const updatedDemoOrders = demoOrders.filter(o => o.id !== order.id);
+      localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
+      
+      console.log(`🗑️ Order ${order.id} deleted successfully`);
+    }
+  };
+
+  const clearAllOrders = () => {
+    const confirmClear = window.confirm('Are you sure you want to clear all orders? This will remove all demo and manually added orders for a clean presentation.');
+    
+    if (confirmClear) {
+      localStorage.removeItem('demoOrders');
+      localStorage.removeItem('rslaf_shared_orders');
+      setOrders([]);
+      console.log('🧹 All orders cleared for presentation');
+    }
   };
 
   const addManualOrder = () => {
@@ -306,13 +256,22 @@ const Orders = () => {
         </div>
         <div className="flex gap-2">
           <button
+            onClick={clearAllOrders}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Clear All Orders
+          </button>
+          <button
             onClick={addManualOrder}
             className="bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-orange-700"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            Add Manual Order
+            Add Order From Customer Portal
           </button>
           <button
             onClick={fetchOrders}
@@ -460,19 +419,32 @@ const Orders = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
+                        <button 
+                          onClick={() => handleViewOrder(order)}
+                          className="p-1 text-blue-400 hover:text-blue-600"
+                          title="View Order"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={() => handleEditOrder(order)}
+                          className="p-1 text-green-400 hover:text-green-600"
+                          title="Edit Order"
+                        >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
+                        <button 
+                          onClick={() => handleDeleteOrder(order)}
+                          className="p-1 text-red-400 hover:text-red-600"
+                          title="Delete Order"
+                        >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-gray-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
                       </div>

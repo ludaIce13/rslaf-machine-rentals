@@ -182,6 +182,15 @@ const Inventory = () => {
       await deleteProduct(product.id);
       await fetchProducts();
       await fetchCounts();
+      
+      // Trigger dashboard update
+      window.dispatchEvent(new Event('inventoryUpdated'));
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'products',
+        newValue: JSON.stringify([]), // Simplified trigger
+        url: window.location.href
+      }));
+      
       alert('Product deleted successfully!');
     } catch (e) {
       console.error('Failed to delete product', e);
@@ -295,6 +304,15 @@ const Inventory = () => {
       setShowForm(false);
       await fetchProducts();
       await fetchCategories();
+      
+      // Trigger dashboard update
+      window.dispatchEvent(new Event('inventoryUpdated'));
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'products',
+        newValue: JSON.stringify([]), // Simplified trigger
+        url: window.location.href
+      }));
+      
       alert('Product created successfully!');
     } catch (err) {
       console.error('Failed to create product', err);

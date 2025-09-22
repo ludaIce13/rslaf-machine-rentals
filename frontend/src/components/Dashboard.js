@@ -22,13 +22,25 @@ const Dashboard = () => {
       loadDashboardData();
     };
 
-    // Add event listeners for order updates
+    // Listen for inventory updates to refresh dashboard
+    const handleInventoryUpdate = (e) => {
+      if (e.key === 'products' || e.type === 'inventoryUpdated') {
+        console.log('🔔 Dashboard - Inventory update detected, refreshing stats...');
+        loadDashboardData();
+      }
+    };
+
+    // Add event listeners for order and inventory updates
     window.addEventListener('storage', handleOrderUpdate);
+    window.addEventListener('storage', handleInventoryUpdate);
     window.addEventListener('orderUpdated', handleOrderUpdate);
+    window.addEventListener('inventoryUpdated', handleInventoryUpdate);
 
     return () => {
       window.removeEventListener('storage', handleOrderUpdate);
+      window.removeEventListener('storage', handleInventoryUpdate);
       window.removeEventListener('orderUpdated', handleOrderUpdate);
+      window.removeEventListener('inventoryUpdated', handleInventoryUpdate);
     };
   }, []);
 
@@ -76,13 +88,19 @@ const Dashboard = () => {
         sum + (parseFloat(order.total_price) || parseFloat(order.total_amount) || 0), 0
       );
 
-      // Get products (static for now)
-      let totalProducts = 6; // Default product count
+      // Get products from inventory (real count)
+      let totalProducts = 0;
       try {
         const productsRes = await getProducts();
-        totalProducts = productsRes.data?.length || 6;
+        totalProducts = productsRes.data?.length || 0;
+        console.log('📦 Dashboard - Products from API:', totalProducts);
       } catch (error) {
-        console.log('Using default product count');
+        console.log('⚠️ Products API not available, checking localStorage...');
+        
+        // Check if there are any products stored locally
+        const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+        totalProducts = localProducts.length;
+        console.log('📦 Dashboard - Products from localStorage:', totalProducts);
       }
 
       setStats({
@@ -101,7 +119,7 @@ const Dashboard = () => {
         totalRentals: 0,
         activeRentals: 0,
         totalRevenue: 0,
-        totalProducts: 6, // Default products
+        totalProducts: 0, // Real zero count
         totalCustomers: 0
       });
       setRecentOrders([]);

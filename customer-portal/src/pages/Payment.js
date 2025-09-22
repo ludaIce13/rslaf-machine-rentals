@@ -125,10 +125,21 @@ const Payment = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            service_id: 'service_rslaf',
-            template_id: 'template_order',
-            user_id: 'rslaf_public_key',
-            template_params: emailData
+            service_id: 'YOUR_SERVICE_ID_HERE',  // Replace with your Service ID
+            template_id: 'YOUR_TEMPLATE_ID_HERE', // Replace with your Template ID
+            user_id: 'YOUR_PUBLIC_KEY_HERE',     // Replace with your Public Key
+            template_params: {
+              customer_name: bookingData.customerInfo.name,
+              customer_email: bookingData.customerInfo.email,
+              customer_phone: bookingData.customerInfo.phone,
+              customer_company: bookingData.customerInfo.company,
+              equipment_name: bookingData.product.name,
+              total_hours: bookingData.totalHours,
+              total_price: bookingData.totalPrice,
+              payment_method: bookingData.paymentMethod,
+              order_id: bookingData.orderId,
+              to_email: 'admin@rslaf.com' // Your admin email
+            }
           })
         });
         

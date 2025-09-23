@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
-import { ToastContainer } from 'react-toastify';
+import { useSettings } from './hooks/useSettings';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Layout Components
@@ -36,10 +37,57 @@ import TipsSafety from './pages/TipsSafety';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
+  const { settings, syncStatus, isMaintenanceMode } = useSettings();
+
+  useEffect(() => {
+    // Listen for settings updates
+    const handleSettingsUpdate = (event) => {
+      toast.success('Settings updated!', {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    };
+
+    window.addEventListener('customerSettingsUpdated', handleSettingsUpdate);
+
+    return () => {
+      window.removeEventListener('customerSettingsUpdated', handleSettingsUpdate);
+    };
+  }, []);
+
+  // Show maintenance mode if enabled
+  if (isMaintenanceMode()) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center p-6 bg-white rounded-lg shadow-lg">
+          <div className="text-6xl mb-4">🔧</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Maintenance Mode</h1>
+          <p className="text-gray-600 mb-4">
+            {settings.companyName} is currently undergoing maintenance. 
+            We'll be back soon!
+          </p>
+          <div className="text-sm text-gray-500">
+            Please check back later or contact support if urgent.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AuthProvider>
       <Router>
         <div className="App">
+          {/* Sync Status Indicator */}
+          {syncStatus === 'connected' && (
+            <div className="bg-green-50 border-b border-green-200 px-4 py-2">
+              <div className="flex items-center justify-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-700">Live sync with admin portal active</span>
+              </div>
+            </div>
+          )}
+          
           <Header />
           <main className="main-content">
             <Routes>

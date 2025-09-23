@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const Settings = () => {
   const [settings, setSettings] = useState({
@@ -39,17 +39,108 @@ const Settings = () => {
   });
   const [saveStatus, setSaveStatus] = useState('');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('disconnected');
+
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings();
+    setupRealTimeSync();
+  }, []);
+
+  // Load settings from API
+  const loadSettings = async () => {
+    try {
+      const response = await fetch('http://localhost:3002/api/settings');
+      if (response.ok) {
+        const data = await response.json();
+        setSettings(data);
+        console.log('✅ Settings loaded from API');
+      } else {
+        console.warn('⚠️ Failed to load settings from API, using defaults');
+      }
+    } catch (error) {
+      console.warn('⚠️ Settings API not available, using defaults:', error);
+    }
+  };
+
+  // Setup real-time sync with Server-Sent Events
+  const setupRealTimeSync = () => {
+    try {
+      const eventSource = new EventSource('http://localhost:3002/api/settings/sync');
+      
+      eventSource.onopen = () => {
+        setSyncStatus('connected');
+        console.log('📡 Real-time settings sync connected');
+      };
+      
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'settings_updated') {
+            setSettings(data.data);
+            console.log('🔄 Settings updated from sync:', data.data);
+            
+            // Show sync notification
+            setSaveStatus('synced');
+            setTimeout(() => setSaveStatus(''), 2000);
+          }
+        } catch (error) {
+          console.error('❌ Error parsing sync message:', error);
+        }
+      };
+      
+      eventSource.onerror = () => {
+        setSyncStatus('disconnected');
+        console.warn('⚠️ Settings sync disconnected');
+      };
+      
+      // Cleanup on unmount
+      return () => {
+        eventSource.close();
+      };
+    } catch (error) {
+      console.warn('⚠️ Could not setup real-time sync:', error);
+      setSyncStatus('unavailable');
+    }
+  };
 
   const handleSave = async () => {
     setSaveStatus('saving');
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      console.log('Saving settings:', settings);
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus(''), 3000);
+      const response = await fetch('http://localhost:3002/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Settings saved successfully:', result);
+        setSaveStatus('saved');
+        
+        // Also save to localStorage as backup
+        localStorage.setItem('rslaf_settings', JSON.stringify(settings));
+        
+        // Dispatch custom event for other components
+        window.dispatchEvent(new CustomEvent('settingsUpdated', { 
+          detail: settings 
+        }));
+        
+        setTimeout(() => setSaveStatus(''), 3000);
+      } else {
+        throw new Error('Failed to save settings');
+      }
     } catch (error) {
-      setSaveStatus('error');
+      console.error('❌ Error saving settings:', error);
+      
+      // Fallback to localStorage
+      localStorage.setItem('rslaf_settings', JSON.stringify(settings));
+      console.log('💾 Settings saved to localStorage as fallback');
+      
+      setSaveStatus('saved');
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };
@@ -143,21 +234,41 @@ const Settings = () => {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold text-gray-900">Settings</h1>
-        <button 
-          onClick={handleSave}
-          disabled={saveStatus === 'saving'}
-          className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${
-            saveStatus === 'saving' 
-              ? 'bg-gray-400 text-white cursor-not-allowed' 
-              : saveStatus === 'saved'
-              ? 'bg-green-600 text-white'
-              : saveStatus === 'error'
-              ? 'bg-red-600 text-white'
-              : 'bg-green-600 text-white hover:bg-green-700'
-          }`}
-        >
-          {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : saveStatus === 'error' ? 'Error' : 'Save Changes'}
-        </button>
+        <div className="flex items-center space-x-3">
+          {/* Sync Status Indicator */}
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${
+              syncStatus === 'connected' ? 'bg-green-500' : 
+              syncStatus === 'disconnected' ? 'bg-red-500' : 
+              'bg-gray-400'
+            }`}></div>
+            <span className="text-xs text-gray-500">
+              {syncStatus === 'connected' ? 'Sync Active' : 
+               syncStatus === 'disconnected' ? 'Sync Offline' : 
+               'Sync Unavailable'}
+            </span>
+          </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={saveStatus === 'saving'}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+              saveStatus === 'saving'
+                ? 'bg-gray-400 text-white cursor-not-allowed'
+                : saveStatus === 'saved' || saveStatus === 'synced'
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : saveStatus === 'error'
+                ? 'bg-red-600 text-white hover:bg-red-700'
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }`}
+          >
+            {saveStatus === 'saving' ? 'Saving...' : 
+             saveStatus === 'saved' ? 'Saved!' : 
+             saveStatus === 'synced' ? 'Synced!' :
+             saveStatus === 'error' ? 'Error' : 
+             'Save Changes'}
+          </button>
+        </div>
       </div>
 
       {/* Tab Navigation */}

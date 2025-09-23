@@ -3,7 +3,7 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2d5016 0%, #4a7c59 50%, #2d5016 100%);
   min-height: 100vh;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -19,12 +19,14 @@
   font-size: 2.5rem;
   margin-bottom: 10px;
   font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  color: #ffffff;
 }
 
 .payment-subtitle {
   font-size: 1.2rem;
-  opacity: 0.9;
+  opacity: 0.95;
+  color: #f8f9fa;
 }
 
 /* Content Layout */
@@ -99,15 +101,15 @@
 }
 
 .selected-method {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   padding: 25px;
   border-radius: 15px;
   text-align: center;
   font-size: 1.3rem;
   font-weight: 600;
-  box-shadow: 0 5px 15px rgba(238, 90, 36, 0.4);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 /* Un Punto Payment Steps - BEAUTIFUL DESIGN */
@@ -131,7 +133,7 @@
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, #ff6b6b, #ffa500, #32cd32, #1e90ff);
+  background: linear-gradient(90deg, #28a745, #20c997, #17a2b8, #28a745);
   border-radius: 25px 25px 0 0;
 }
 
@@ -160,14 +162,15 @@
 
 /* USSD Code Display - PREMIUM DESIGN */
 .ussd-code-display {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2d5016 0%, #4a7c59 100%);
   padding: 35px;
   border-radius: 20px;
   margin: 25px 0;
   color: white;
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 25px rgba(45, 80, 22, 0.4);
   position: relative;
   overflow: hidden;
+  border: 2px solid #28a745;
 }
 
 .ussd-code-display::before {
@@ -189,24 +192,26 @@
 .ussd-code-display p {
   font-size: 1.2rem;
   margin-bottom: 20px;
-  font-weight: 500;
+  font-weight: 600;
   position: relative;
   z-index: 1;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 /* USSD Code - HIGHLIGHT DESIGN */
 .ussd-code {
   font-size: 3rem;
   font-weight: 900;
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  background: rgba(40, 167, 69, 0.3);
   padding: 25px;
   border-radius: 15px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid #28a745;
   margin: 25px 0;
   letter-spacing: 3px;
   font-family: 'Courier New', monospace;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.7);
   backdrop-filter: blur(10px);
   position: relative;
   z-index: 1;
@@ -214,9 +219,9 @@
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
-  70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.6); }
+  70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
 }
 
 .ussd-instructions {
@@ -224,21 +229,24 @@
   line-height: 1.8;
   text-align: left;
   margin-top: 20px;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(40, 167, 69, 0.2);
   padding: 20px;
   border-radius: 10px;
   position: relative;
   z-index: 1;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
 .ussd-instructions strong {
-  color: #ffd700;
-  font-weight: 600;
+  color: #90ee90;
+  font-weight: 700;
 }
 
 /* Buttons - MODERN DESIGN */
 .check-status-btn {
-  background: linear-gradient(135deg, #32cd32, #228b22);
+  background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   border: none;
   padding: 18px 40px;
@@ -248,15 +256,16 @@
   cursor: pointer;
   transition: all 0.3s ease;
   margin-top: 25px;
-  box-shadow: 0 8px 20px rgba(50, 205, 50, 0.3);
+  box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .check-status-btn:hover {
-  background: linear-gradient(135deg, #228b22, #32cd32);
+  background: linear-gradient(135deg, #20c997, #28a745);
   transform: translateY(-3px);
-  box-shadow: 0 12px 25px rgba(50, 205, 50, 0.4);
+  box-shadow: 0 12px 25px rgba(40, 167, 69, 0.5);
 }
 
 .check-status-btn:active {
@@ -328,7 +337,7 @@
 }
 
 .pay-btn, .cancel-btn {
-  background: linear-gradient(135deg, #3498db, #2980b9);
+  background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   border: none;
   padding: 20px 50px;
@@ -339,15 +348,16 @@
   transition: all 0.3s ease;
   min-width: 280px;
   margin: 10px;
-  box-shadow: 0 8px 20px rgba(52, 152, 219, 0.3);
+  box-shadow: 0 8px 20px rgba(40, 167, 69, 0.4);
   text-transform: uppercase;
   letter-spacing: 1px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .pay-btn:hover {
-  background: linear-gradient(135deg, #2980b9, #3498db);
+  background: linear-gradient(135deg, #20c997, #28a745);
   transform: translateY(-3px);
-  box-shadow: 0 12px 25px rgba(52, 152, 219, 0.4);
+  box-shadow: 0 12px 25px rgba(40, 167, 69, 0.5);
 }
 
 .pay-btn:disabled {
@@ -358,21 +368,21 @@
 }
 
 .cancel-btn {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  box-shadow: 0 8px 20px rgba(220, 53, 69, 0.4);
 }
 
 .cancel-btn:hover {
-  background: linear-gradient(135deg, #c0392b, #e74c3c);
+  background: linear-gradient(135deg, #c82333, #dc3545);
   transform: translateY(-3px);
-  box-shadow: 0 12px 25px rgba(231, 76, 60, 0.4);
+  box-shadow: 0 12px 25px rgba(220, 53, 69, 0.5);
 }
 
 /* Back Button */
 .back-btn {
   background: rgba(255, 255, 255, 0.2);
   color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   padding: 12px 25px;
   border-radius: 25px;
   font-size: 1rem;
@@ -380,11 +390,13 @@
   margin-bottom: 20px;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .back-btn:hover {
   background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.7);
   transform: translateY(-2px);
 }
 

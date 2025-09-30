@@ -254,16 +254,7 @@ const Booking = () => {
       }));
       
       console.log('📢 Order events dispatched for admin portal refresh');
-        
-        // Also try to notify parent window if in iframe
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'orderUpdated', data: newOrder }, '*');
-        }
-        
-        console.log('🎉 Order created successfully:', orderId, orderData);
-        console.log('📢 Events dispatched for admin portal refresh');
-        console.log('💾 Order stored in both local and shared storage');
-      }
+      console.log('🎉 Order created successfully:', orderId, orderData);
       
       // Navigate to payment page with booking data and order ID
       const bookingData = {

@@ -639,6 +639,26 @@ const Inventory = () => {
                   <input className="w-full border rounded p-2" value={editData?.image_url || ''} onChange={(e)=>setEditData({...editData, image_url: e.target.value})} />
                 </div>
                 <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Upload New Image</label>
+                  <input type="file" accept="image/*" onChange={async (e) => {
+                    const f = e.target.files && e.target.files[0];
+                    if (!f) return;
+                    try {
+                      const res = await uploadProductImage(f);
+                      const url = res.data?.url || res.data?.path || '';
+                      if (url) setEditData({...editData, image_url: url});
+                    } catch (err) {
+                      console.error('Upload failed', err);
+                      alert('Failed to upload image');
+                    }
+                  }} className="w-full" />
+                  {editData?.image_url && (
+                    <div className="mt-2">
+                      <img src={editData.image_url.startsWith('/static/') ? `${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}${editData.image_url}` : editData.image_url} alt="Preview" className="h-24 w-auto object-cover rounded border" onError={(e) => e.target.style.display = 'none'} />
+                    </div>
+                  )}
+                </div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-1">Description</label>
                   <textarea className="w-full border rounded p-2" rows={3} value={editData?.description || ''} onChange={(e)=>setEditData({...editData, description: e.target.value})} />
                 </div>

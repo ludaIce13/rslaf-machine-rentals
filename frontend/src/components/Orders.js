@@ -50,35 +50,44 @@ const Orders = () => {
     console.log('🔄 Fetching orders...');
     
     try {
-      // Start with empty array for clean presentation
       let allOrders = [];
 
+      // PRIORITY 1: Try shared API server (localhost:3001) - this connects customer and admin portals
       try {
-        const response = await api.getOrders();
-        let apiOrders = response.data || [];
-        console.log('📡 API orders fetched:', apiOrders.length);
-        allOrders = [...allOrders, ...apiOrders];
-      } catch (apiError) {
-        console.log('⚠️ API not available');
+        const sharedApiResponse = await fetch('http://localhost:3001/api/orders');
+        if (sharedApiResponse.ok) {
+          const sharedData = await sharedApiResponse.json();
+          allOrders = sharedData.data || [];
+          console.log('✅ Shared API orders fetched:', allOrders.length);
+        }
+      } catch (sharedApiError) {
+        console.log('⚠️ Shared API not available, trying main API');
+        
+        // PRIORITY 2: Try main API
+        try {
+          const response = await api.getOrders();
+          let apiOrders = response.data || [];
+          console.log('📡 Main API orders fetched:', apiOrders.length);
+          allOrders = [...allOrders, ...apiOrders];
+        } catch (apiError) {
+          console.log('⚠️ Main API not available');
+        }
       }
 
-      // Get demo orders from localStorage (for manually added orders)
+      // PRIORITY 3: Get demo orders from localStorage as fallback
       const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
       console.log('💾 Demo orders from localStorage:', demoOrders.length);
 
-      // ALSO check shared orders from customer portal
-      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-      console.log('🔗 Shared orders from customer portal:', sharedOrders.length);
-
-      // Combine all real orders (no sample data for presentation)
-      allOrders = [...allOrders, ...demoOrders, ...sharedOrders];
-      console.log('📊 Total orders to display:', allOrders.length);
+      // Combine all orders (shared API should already include everything)
+      if (allOrders.length === 0) {
+        allOrders = [...demoOrders];
+      }
       
+      console.log('📊 Total orders to display:', allOrders.length);
       setOrders(allOrders);
 
     } catch (error) {
       console.error('❌ Error in fetchOrders:', error);
-      // For presentation, start with empty list if there are errors
       setOrders([]);
     } finally {
       setLoading(false);

@@ -9,7 +9,8 @@ app.use(cors({
     'https://rslaf-customer.onrender.com',
     'https://rslaf-admin.onrender.com',
     'http://localhost:3000',
-    'http://localhost:3001'
+    'http://localhost:3001',
+    'http://localhost:3003'  // Customer portal
   ]
 }));
 

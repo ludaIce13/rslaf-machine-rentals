@@ -198,64 +198,62 @@ const Booking = () => {
       let orderId = Math.floor(Math.random() * 1000) + 1; // Fallback order ID
 
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders`, {
+        // First try shared API server (localhost:3001)
+        const sharedApiResponse = await fetch('http://localhost:3001/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)
         });
 
-        if (response.ok) {
-          const createdOrder = await response.json();
+        if (sharedApiResponse.ok) {
+          const createdOrder = await sharedApiResponse.json();
           orderId = createdOrder.id;
+          console.log('✅ Order created via shared API:', orderId);
+        } else {
+          throw new Error('Shared API failed, trying main API');
         }
-      } catch (apiError) {
-        console.log('API not available, using demo mode');
-        // Store order in localStorage for demo
-        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-        const newOrder = { ...orderData, id: orderId, created_at: new Date().toISOString() };
-        demoOrders.push(newOrder);
-        localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
-
-        // ALSO store in a shared key that admin can access
-        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-        sharedOrders.push(newOrder);
-        localStorage.setItem('rslaf_shared_orders', JSON.stringify(sharedOrders));
-
-        // Send webhook to admin portal for real-time sync
+      } catch (sharedApiError) {
+        console.log('⚠️ Shared API not available, trying main API');
+        
         try {
-          const webhookData = {
-            event: 'order_created',
-            order: newOrder,
-            timestamp: new Date().toISOString(),
-            source: 'customer_portal'
-          };
-
-          // Send to webhook.site for testing (replace with your webhook URL)
-          await fetch('https://webhook.site/unique-url-here', {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(webhookData)
+            body: JSON.stringify(orderData)
           });
 
-          // Also try Zapier webhook (if configured)
-          await fetch('https://hooks.zapier.com/hooks/catch/rslaf/orders/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(webhookData)
-          });
+          if (response.ok) {
+            const createdOrder = await response.json();
+            orderId = createdOrder.id;
+            console.log('✅ Order created via main API:', orderId);
+          }
+        } catch (apiError) {
+          console.log('⚠️ Main API not available, using localStorage fallback');
+          
+          // Store order in localStorage for demo
+          const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+          const newOrder = { ...orderData, id: orderId, created_at: new Date().toISOString() };
+          demoOrders.push(newOrder);
+          localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
 
-          console.log('🔗 Webhook sent successfully');
-        } catch (webhookError) {
-          console.log('⚠️ Webhook failed:', webhookError);
+          // ALSO store in a shared key that admin can access
+          const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+          sharedOrders.push(newOrder);
+          localStorage.setItem('rslaf_shared_orders', JSON.stringify(sharedOrders));
+          
+          console.log('💾 Order saved to localStorage:', orderId);
         }
+      }
 
-        // Trigger multiple events for admin portal to refresh
-        window.dispatchEvent(new Event('orderUpdated'));
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'demoOrders',
-          newValue: JSON.stringify(demoOrders),
-          url: window.location.href
-        }));
+      // Trigger events for admin portal to refresh
+      window.dispatchEvent(new Event('orderUpdated'));
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'demoOrders',
+        newValue: JSON.stringify([{ ...orderData, id: orderId }]),
+        url: window.location.href
+      }));
+      
+      console.log('📢 Order events dispatched for admin portal refresh');
         
         // Also try to notify parent window if in iframe
         if (window.parent && window.parent !== window) {

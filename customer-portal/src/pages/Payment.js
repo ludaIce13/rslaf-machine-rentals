@@ -192,7 +192,8 @@ const Payment = () => {
 
       // Try to update order via API, fallback to demo mode
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/orders/${bookingData.orderId}`, {
+        // First try shared API server (localhost:3001)
+        const sharedApiResponse = await fetch(`http://localhost:3001/api/orders/${bookingData.orderId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -204,50 +205,72 @@ const Payment = () => {
           })
         });
 
-        if (!response.ok) {
-          throw new Error('API update failed');
+        if (sharedApiResponse.ok) {
+          console.log('✅ Order updated via shared API');
+        } else {
+          throw new Error('Shared API failed, trying main API');
         }
+      } catch (sharedApiError) {
+        console.log('⚠️ Shared API not available, trying main API');
         
-        console.log('✅ Order updated via API');
-      } catch (apiError) {
-        console.log('📱 API not available, updating local storage');
-        
-        // Update order in localStorage
-        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-        const orderIndex = demoOrders.findIndex(order => order.id === bookingData.orderId);
-        
-        if (orderIndex !== -1) {
-          demoOrders[orderIndex] = {
-            ...demoOrders[orderIndex],
-            status: 'paid',
-            payment_status: 'completed',
-            delivery_status: 'ready for delivery',
-            payment_details: paymentDetails,
-            updated_at: new Date().toISOString()
-          };
-          
-          localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
+        try {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/orders/${bookingData.orderId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              status: 'paid',
+              payment_status: 'completed',
+              delivery_status: 'ready for delivery',
+              payment_details: paymentDetails,
+              updated_at: new Date().toISOString()
+            })
+          });
 
-          // Trigger events for admin portal to refresh
-          window.dispatchEvent(new Event('orderUpdated'));
-          window.dispatchEvent(new StorageEvent('storage', {
-            key: 'demoOrders',
-            newValue: JSON.stringify(demoOrders),
-            url: window.location.href
-          }));
-          
-          // Also try to notify parent window if in iframe
-          if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ 
-              type: 'paymentCompleted', 
-              orderId: bookingData.orderId,
-              paymentDetails 
-            }, '*');
+          if (!response.ok) {
+            throw new Error('API update failed');
           }
           
-          console.log('💰 Payment completed for order:', bookingData.orderId);
-          console.log('📊 Payment Details:', paymentDetails);
-          console.log('📢 Payment events dispatched for admin portal');
+          console.log('✅ Order updated via main API');
+        } catch (apiError) {
+          console.log('📱 API not available, updating local storage');
+          
+          // Update order in localStorage
+          const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+          const orderIndex = demoOrders.findIndex(order => order.id === bookingData.orderId);
+          
+          if (orderIndex !== -1) {
+            demoOrders[orderIndex] = {
+              ...demoOrders[orderIndex],
+              status: 'paid',
+              payment_status: 'completed',
+              delivery_status: 'ready for delivery',
+              payment_details: paymentDetails,
+              updated_at: new Date().toISOString()
+            };
+            
+            localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
+
+            // Trigger events for admin portal to refresh
+            window.dispatchEvent(new Event('orderUpdated'));
+            window.dispatchEvent(new StorageEvent('storage', {
+              key: 'demoOrders',
+              newValue: JSON.stringify(demoOrders),
+              url: window.location.href
+            }));
+            
+            // Also try to notify parent window if in iframe
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ 
+                type: 'paymentCompleted', 
+                orderId: bookingData.orderId,
+                paymentDetails 
+              }, '*');
+            }
+            
+            console.log('💰 Payment completed for order:', bookingData.orderId);
+            console.log('📊 Payment Details:', paymentDetails);
+            console.log('📢 Payment events dispatched for admin portal');
+          }
         }
       }
 

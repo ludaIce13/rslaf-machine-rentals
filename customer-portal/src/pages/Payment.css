@@ -481,6 +481,172 @@
   z-index: -1;
 }
 
+/* Payment Feedback Notification */
+.payment-feedback {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  z-index: 1000;
+  max-width: 500px;
+  width: 90%;
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.payment-feedback::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  border-radius: 20px 20px 0 0;
+}
+
+.payment-feedback.success::before {
+  background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.payment-feedback.pending::before {
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+}
+
+.payment-feedback.failed::before {
+  background: linear-gradient(90deg, #dc3545, #c82333);
+}
+
+.feedback-content {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.feedback-icon {
+  font-size: 4rem;
+  flex-shrink: 0;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.payment-feedback.success .feedback-icon {
+  animation: none;
+}
+
+.feedback-message {
+  flex: 1;
+}
+
+.feedback-message h3 {
+  color: #2c3e50;
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.feedback-message p {
+  color: #495057;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.feedback-details {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 20px 0;
+  border-left: 4px solid #28a745;
+}
+
+.feedback-details p {
+  margin: 8px 0;
+  font-size: 0.95rem;
+  color: #495057;
+}
+
+.feedback-details strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.feedback-btn-primary {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 150px;
+}
+
+.feedback-btn-primary:hover {
+  background: linear-gradient(135deg, #20c997, #28a745);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+.feedback-btn-secondary {
+  background: white;
+  color: #28a745;
+  border: 2px solid #28a745;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 150px;
+}
+
+.feedback-btn-secondary:hover {
+  background: #28a745;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+}
+
+/* Overlay for feedback */
+.payment-feedback::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: -1;
+}
+
 @media (max-width: 768px) {
   .payment-content {
     grid-template-columns: 1fr;

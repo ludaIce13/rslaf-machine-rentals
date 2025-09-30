@@ -8,11 +8,18 @@ const Payment = () => {
   const bookingData = location.state;
   
   const [processing, setProcessing] = useState(false);
-  const [paymentStep, setPaymentStep] = useState('initial'); // 'initial', 'ussd', 'checking', 'completed'
+  const [paymentStep, setPaymentStep] = useState('initial'); // 'initial', 'ussd', 'checking', 'completed', 'failed'
   const [ussdCode, setUssdCode] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [paymentStatus, setPaymentStatus] = useState('');
   const [statusCheckInterval, setStatusCheckInterval] = useState(null);
+  const [paymentFeedback, setPaymentFeedback] = useState({
+    show: false,
+    type: '', // 'success', 'pending', 'failed'
+    message: '',
+    orderId: null,
+    transactionId: null
+  });
 
   if (!bookingData) {
     return (
@@ -78,6 +85,13 @@ const Payment = () => {
 
   const startStatusChecking = () => {
     setPaymentStep('checking');
+    setPaymentFeedback({
+      show: true,
+      type: 'pending',
+      message: 'Checking payment status...',
+      orderId: bookingData.orderId,
+      transactionId: transactionId
+    });
     
     const interval = setInterval(async () => {
       try {
@@ -87,19 +101,43 @@ const Payment = () => {
         if (response.ok) {
           setPaymentStatus(data.paymentStatus);
           
+          // Update feedback message based on status
+          setPaymentFeedback(prev => ({
+            ...prev,
+            type: 'pending',
+            message: `Payment status: ${data.paymentStatus.toUpperCase()}`
+          }));
+          
           if (data.paymentStatus === 'completed') {
             clearInterval(interval);
             setStatusCheckInterval(null);
-            await completePayment();
+            setPaymentFeedback({
+              show: true,
+              type: 'success',
+              message: 'Payment completed successfully!',
+              orderId: bookingData.orderId,
+              transactionId: transactionId
+            });
+            await completePayment(data);
           } else if (data.paymentStatus === 'expired' || data.paymentStatus === 'cancelled' || data.paymentStatus === 'failed') {
             clearInterval(interval);
             setStatusCheckInterval(null);
-            alert(`Payment ${data.paymentStatus}. Please try again.`);
-            setPaymentStep('initial');
+            setPaymentStep('failed');
+            setPaymentFeedback({
+              show: true,
+              type: 'failed',
+              message: `Payment ${data.paymentStatus}. Please try again.`,
+              orderId: bookingData.orderId,
+              transactionId: transactionId
+            });
           }
         }
       } catch (error) {
         console.error('Status check error:', error);
+        setPaymentFeedback(prev => ({
+          ...prev,
+          message: 'Error checking payment status. Retrying...'
+        }));
       }
     }, 10000); // Check every 10 seconds
     
@@ -111,16 +149,22 @@ const Payment = () => {
         clearInterval(interval);
         setStatusCheckInterval(null);
         if (paymentStep === 'checking') {
-          alert('Payment timeout. Please try again.');
-          setPaymentStep('initial');
+          setPaymentStep('failed');
+          setPaymentFeedback({
+            show: true,
+            type: 'failed',
+            message: 'Payment timeout. USSD code expired. Please try again.',
+            orderId: bookingData.orderId,
+            transactionId: transactionId
+          });
         }
       }
     }, 15 * 60 * 1000);
   };
 
-  const completePayment = async () => {
+  const completePayment = async (paymentData) => {
     setPaymentStep('completed');
-    await handlePaymentSuccess();
+    await handlePaymentSuccess(paymentData);
   };
 
   const handlePayment = async () => {
@@ -133,38 +177,58 @@ const Payment = () => {
     }
   };
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (paymentData = {}) => {
     setProcessing(true);
     
     try {
+      const paymentDetails = {
+        transactionId: transactionId || paymentData.transactionId,
+        paymentMethod: bookingData.paymentMethod,
+        paymentStatus: 'completed',
+        paymentDate: new Date().toISOString(),
+        amount: bookingData.totalPrice,
+        currency: 'SLL' // Sierra Leone Leones
+      };
+
       // Try to update order via API, fallback to demo mode
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders/${bookingData.orderId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/orders/${bookingData.orderId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             status: 'paid',
             payment_status: 'completed',
-            delivery_status: 'ready for delivery'
+            delivery_status: 'ready for delivery',
+            payment_details: paymentDetails,
+            updated_at: new Date().toISOString()
           })
         });
 
         if (!response.ok) {
           throw new Error('API update failed');
         }
+        
+        console.log('✅ Order updated via API');
       } catch (apiError) {
-        console.log('API not available, updating demo order');
-        // Update demo order in localStorage
+        console.log('📱 API not available, updating local storage');
+        
+        // Update order in localStorage
         const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
         const orderIndex = demoOrders.findIndex(order => order.id === bookingData.orderId);
+        
         if (orderIndex !== -1) {
-          demoOrders[orderIndex].status = 'paid';
-          demoOrders[orderIndex].payment_status = 'completed';
-          demoOrders[orderIndex].delivery_status = 'ready for delivery';
-          demoOrders[orderIndex].updated_at = new Date().toISOString(); // Add update timestamp
+          demoOrders[orderIndex] = {
+            ...demoOrders[orderIndex],
+            status: 'paid',
+            payment_status: 'completed',
+            delivery_status: 'ready for delivery',
+            payment_details: paymentDetails,
+            updated_at: new Date().toISOString()
+          };
+          
           localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
 
-          // Trigger multiple events for admin portal to refresh
+          // Trigger events for admin portal to refresh
           window.dispatchEvent(new Event('orderUpdated'));
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'demoOrders',
@@ -174,11 +238,16 @@ const Payment = () => {
           
           // Also try to notify parent window if in iframe
           if (window.parent && window.parent !== window) {
-            window.parent.postMessage({ type: 'paymentCompleted', orderId: bookingData.orderId }, '*');
+            window.parent.postMessage({ 
+              type: 'paymentCompleted', 
+              orderId: bookingData.orderId,
+              paymentDetails 
+            }, '*');
           }
           
-          console.log('💰 Payment completed for order:', bookingData.orderId, 'Status updated to paid');
-          console.log('📢 Payment events dispatched for admin portal refresh');
+          console.log('💰 Payment completed for order:', bookingData.orderId);
+          console.log('📊 Payment Details:', paymentDetails);
+          console.log('📢 Payment events dispatched for admin portal');
         }
       }
 
@@ -346,6 +415,59 @@ const Payment = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Payment Feedback Notification */}
+      {paymentFeedback.show && (
+        <div className={`payment-feedback ${paymentFeedback.type}`}>
+          <div className="feedback-content">
+            <div className="feedback-icon">
+              {paymentFeedback.type === 'success' && '✅'}
+              {paymentFeedback.type === 'pending' && '⏳'}
+              {paymentFeedback.type === 'failed' && '❌'}
+            </div>
+            <div className="feedback-message">
+              <h3>
+                {paymentFeedback.type === 'success' && 'Payment Successful!'}
+                {paymentFeedback.type === 'pending' && 'Payment Processing...'}
+                {paymentFeedback.type === 'failed' && 'Payment Failed'}
+              </h3>
+              <p>{paymentFeedback.message}</p>
+              {paymentFeedback.orderId && (
+                <div className="feedback-details">
+                  <p><strong>Order ID:</strong> {paymentFeedback.orderId}</p>
+                  {paymentFeedback.transactionId && (
+                    <p><strong>Transaction ID:</strong> {paymentFeedback.transactionId}</p>
+                  )}
+                  <p><strong>Amount:</strong> ${bookingData.totalPrice.toFixed(2)}</p>
+                  <p><strong>Method:</strong> {getPaymentMethodDisplay(bookingData.paymentMethod)}</p>
+                </div>
+              )}
+              {paymentFeedback.type === 'success' && (
+                <div className="feedback-actions">
+                  <button className="feedback-btn-primary" onClick={() => navigate('/products')}>
+                    View More Equipment
+                  </button>
+                  <button className="feedback-btn-secondary" onClick={() => navigate('/orders')}>
+                    View Order Status
+                  </button>
+                </div>
+              )}
+              {paymentFeedback.type === 'failed' && (
+                <div className="feedback-actions">
+                  <button className="feedback-btn-primary" onClick={() => {
+                    setPaymentFeedback({ show: false, type: '', message: '', orderId: null, transactionId: null });
+                    setPaymentStep('initial');
+                    setUssdCode('');
+                    setTransactionId('');
+                  }}>
+                    Try Again
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

@@ -420,9 +420,37 @@ const Orders = () => {
                         <span className="font-medium text-gray-900">
                           ${order.total_price?.toFixed(2) || order.total_amount?.toFixed(2) || '0.00'}
                         </span>
-                        <span className="text-sm text-gray-500">
-                          {order.payment_method ? order.payment_method.replace('_', ' ').toUpperCase() : 'Payment pending'}
-                        </span>
+                        <div className="text-sm text-gray-500">
+                          {order.payment_method ? (
+                            <span className="font-medium">
+                              {order.payment_method === 'orange_money' ? '🟠 Orange Money' :
+                               order.payment_method === 'afri_money' ? '💜 Afri Money' :
+                               order.payment_method.replace('_', ' ').toUpperCase()}
+                            </span>
+                          ) : (
+                            'Payment pending'
+                          )}
+                        </div>
+                        {order.payment_details?.transactionId && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">
+                              TXN: {order.payment_details.transactionId.substring(0, 12)}...
+                            </span>
+                          </div>
+                        )}
+                        {order.payment_status && (
+                          <div className="mt-1">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              order.payment_status === 'completed' ? 'bg-green-100 text-green-700' :
+                              order.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {order.payment_status === 'completed' ? '✓ Paid' : 
+                               order.payment_status === 'pending' ? '⏳ Pending' : 
+                               order.payment_status}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

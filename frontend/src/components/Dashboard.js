@@ -50,12 +50,33 @@ const Dashboard = () => {
       // Get orders from multiple sources like the Orders component does
       let allOrders = [];
 
+      // 1) Try backend public endpoint in production
       try {
-        const response = await getOrders();
-        let apiOrders = response.data || [];
-        allOrders = [...allOrders, ...apiOrders];
-      } catch (apiError) {
-        console.log('⚠️ API not available for dashboard');
+        const isProduction = window.location.hostname.includes('onrender.com');
+        if (isProduction) {
+          const res = await fetch('https://rslaf-backend.onrender.com/orders/public/all');
+          if (res.ok) {
+            const data = await res.json();
+            allOrders = Array.isArray(data) ? data : (data.data || []);
+            console.log('📊 Dashboard - Orders from public API:', allOrders.length);
+          } else {
+            console.log('⚠️ Dashboard - Public API returned', res.status);
+          }
+        }
+      } catch (e) {
+        console.log('⚠️ Dashboard - Public API fetch failed');
+      }
+
+      // 2) Fallback to authenticated API helper (may be empty on production)
+      if (allOrders.length === 0) {
+        try {
+          const response = await getOrders();
+          let apiOrders = response.data || [];
+          allOrders = [...allOrders, ...apiOrders];
+          console.log('📊 Dashboard - Orders from api.getOrders():', apiOrders.length);
+        } catch (apiError) {
+          console.log('⚠️ API not available for dashboard');
+        }
       }
 
       // Get demo orders from localStorage (for manually added orders)
@@ -84,7 +105,7 @@ const Dashboard = () => {
         order.status === 'confirmed' || order.status === 'pending' || order.status === 'paid'
       ).length;
       
-      const totalRevenue = allOrders.reduce((sum, order) => 
+      const totalRevenue = allOrders.reduce((sum, order) =>
         sum + (parseFloat(order.total_price) || parseFloat(order.total_amount) || 0), 0
       );
 
@@ -320,7 +341,7 @@ const Dashboard = () => {
                         {order.status}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-gray-900 font-medium">${parseFloat(order.total_amount || 0).toFixed(2)}</td>
+                    <td className="py-3 px-4 text-gray-900 font-medium">${parseFloat(order.total_price || order.total_amount || 0).toFixed(2)}</td>
                     <td className="py-3 px-4 text-gray-600">
                       {new Date(order.created_at || Date.now()).toLocaleDateString()}
                     </td>

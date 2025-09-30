@@ -66,10 +66,38 @@ async def list_all_orders(
     """Admin/Staff endpoint to list all orders (requires authentication)"""
     return db.query(models.Order).all()
 
-@router.get("/public/all", response_model=list[schemas.OrderOut])
+@router.get("/public/all")
 async def list_all_orders_public(db: Session = Depends(get_db)):
-    """Public endpoint to list all orders (NO AUTH - for demo/testing only)"""
-    return db.query(models.Order).all()
+    """Public endpoint to list all orders (NO AUTH) with display metadata merged in."""
+    orders = db.query(models.Order).all()
+    # Build a merged list preserving extra fields for the admin UI
+    results = []
+    for o in orders:
+        meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == o.id).first()
+        row = {
+            "id": o.id,
+            "customer_id": o.customer_id,
+            "status": o.status,
+            "created_at": o.created_at,
+            "subtotal": o.subtotal,
+            "total": o.total,
+        }
+        if meta:
+            row.update({
+                "customer_info": {
+                    "name": meta.customer_name,
+                    "email": meta.customer_email,
+                    "phone": meta.customer_phone,
+                },
+                "equipment_name": meta.equipment_name,
+                "payment_method": meta.payment_method,
+                "total_price": meta.total_price,
+                "total_hours": meta.total_hours,
+                "start_date": meta.start_date,
+                "end_date": meta.end_date,
+            })
+        results.append(row)
+    return results
 
 # ---------------------------
 # Public demo endpoints (no auth)
@@ -115,6 +143,30 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
     db.commit()
     db.refresh(order)
 
+    # Store demo/public metadata for admin display
+    meta = models.PublicOrderMeta(
+        order_id=order.id,
+        customer_name=name,
+        customer_email=email,
+        customer_phone=phone,
+        equipment_name=str(payload.get("equipment_name") or ""),
+        payment_method=str(payload.get("payment_method") or ""),
+        total_price=total,
+        total_hours=float(payload.get("total_hours") or 0.0),
+    )
+    # Attempt to parse dates if provided (ISO strings recommended)
+    try:
+        from datetime import datetime as _dt
+        sd = payload.get("start_date")
+        ed = payload.get("end_date")
+        meta.start_date = _dt.fromisoformat(sd) if sd else None
+        meta.end_date = _dt.fromisoformat(ed) if ed else None
+    except Exception:
+        pass
+
+    db.add(meta)
+    db.commit()
+
     return {"id": order.id}
 
 
@@ -147,7 +199,47 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
         payment = models.Payment(order_id=order.id, method=str(method), amount=amt, reference=str(reference))
         db.add(payment)
 
+        # Update public metadata with latest totals/method if exists
+        meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == order.id).first()
+        if meta:
+            if method:
+                meta.payment_method = str(method)
+            if amount is not None:
+                meta.total_price = amt or meta.total_price
+
     db.commit()
     db.refresh(order)
 
     return {"ok": True, "order_id": order.id}
+
+
+@router.delete("/public/{order_id}")
+async def public_delete_order(order_id: int, db: Session = Depends(get_db)):
+    """Delete a single order and its related records (demo/public)."""
+    order = db.query(models.Order).get(order_id)
+    if not order:
+        # Idempotent delete
+        return {"ok": True, "deleted": 0}
+
+    # Delete metadata
+    db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == order_id).delete()
+    # Delete payments
+    db.query(models.Payment).filter(models.Payment.order_id == order_id).delete()
+    # Delete reservations
+    db.query(models.Reservation).filter(models.Reservation.order_id == order_id).delete()
+    # Delete order
+    db.delete(order)
+    db.commit()
+    return {"ok": True, "deleted": 1}
+
+
+@router.delete("/public/all")
+async def public_delete_all_orders(db: Session = Depends(get_db)):
+    """Dangerous: delete all orders and related rows (demo reset)."""
+    # Delete in dependency order
+    db.query(models.PublicOrderMeta).delete()
+    db.query(models.Payment).delete()
+    db.query(models.Reservation).delete()
+    db.query(models.Order).delete()
+    db.commit()
+    return {"ok": True}

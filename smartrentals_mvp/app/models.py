@@ -84,6 +84,25 @@ class Order(Base):
     payments = relationship("Payment", back_populates="order")
 
 
+class PublicOrderMeta(Base):
+    """
+    Lightweight metadata attached to an order for public/demo flows (no auth).
+    This avoids modifying the core orders table and works on Render without migrations.
+    """
+    __tablename__ = "public_order_meta"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    order_id: Mapped[int] = mapped_column(Integer, ForeignKey("orders.id"), index=True, unique=True)
+    customer_name: Mapped[str] = mapped_column(String, default="")
+    customer_email: Mapped[str] = mapped_column(String, default="")
+    customer_phone: Mapped[str] = mapped_column(String, default="")
+    equipment_name: Mapped[str] = mapped_column(String, default="")
+    payment_method: Mapped[str] = mapped_column(String, default="")
+    total_price: Mapped[float] = mapped_column(Float, default=0.0)
+    total_hours: Mapped[float] = mapped_column(Float, default=0.0)
+    start_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    end_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+
+
 class Reservation(Base):
     __tablename__ = "reservations"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)

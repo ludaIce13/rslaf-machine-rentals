@@ -171,28 +171,79 @@ const Orders = () => {
   const handleDeleteOrder = (order) => {
     const confirmDelete = window.confirm(`Are you sure you want to delete this order?\n\nCustomer: ${order.customer_info?.name || order.customer?.name}\nEquipment: ${order.equipment_name || order.product?.name}\nAmount: $${order.total_price}`);
     
-    if (confirmDelete) {
-      // Remove from orders array
+    if (!confirmDelete) return;
+
+    const isProduction = window.location.hostname.includes('onrender.com');
+    const deleteFromState = () => {
       const updatedOrders = orders.filter(o => o.id !== order.id);
       setOrders(updatedOrders);
-      
-      // Remove from localStorage
       const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
       const updatedDemoOrders = demoOrders.filter(o => o.id !== order.id);
       localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
-      
-      console.log(`🗑️ Order ${order.id} deleted successfully`);
+      // Also remove from shared orders cache used by Dashboard
+      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+      const updatedShared = sharedOrders.filter(o => o.id !== order.id);
+      localStorage.setItem('rslaf_shared_orders', JSON.stringify(updatedShared));
+      window.dispatchEvent(new Event('orderUpdated'));
+      console.log(`🗑️ Order ${order.id} deleted`);
+    };
+
+    if (isProduction) {
+      fetch(`https://rslaf-backend.onrender.com/orders/public/${order.id}`, { method: 'DELETE' })
+        .then(res => {
+          if (!res.ok) throw new Error('Delete failed');
+          deleteFromState();
+        })
+        .catch(err => {
+          console.error('❌ Failed to delete on server, removing locally as fallback', err);
+          deleteFromState();
+        });
+    } else {
+      deleteFromState();
     }
   };
 
   const clearAllOrders = () => {
-    const confirmClear = window.confirm('Are you sure you want to clear all orders? This will remove all demo and manually added orders for a clean presentation.');
-    
-    if (confirmClear) {
+    const confirmClear = window.confirm('Are you sure you want to clear all orders? This will remove all orders from the database (demo) and local storage.');
+    if (!confirmClear) return;
+
+    const isProduction = window.location.hostname.includes('onrender.com');
+    const clearLocal = () => {
       localStorage.removeItem('demoOrders');
       localStorage.removeItem('rslaf_shared_orders');
       setOrders([]);
-      console.log('🧹 All orders cleared for presentation');
+      window.dispatchEvent(new Event('orderUpdated'));
+      console.log('🧹 All orders cleared locally');
+    };
+
+    if (isProduction) {
+      fetch('https://rslaf-backend.onrender.com/orders/public/all', { method: 'DELETE' })
+        .then(async res => {
+          if (res.ok) {
+            clearLocal();
+            return;
+          }
+          // If 404, fall back to per-order deletion
+          if (res.status === 404) {
+            try {
+              const listRes = await fetch('https://rslaf-backend.onrender.com/orders/public/all');
+              const data = listRes.ok ? await listRes.json() : [];
+              const ids = Array.isArray(data) ? data.map(o => o.id) : [];
+              for (const id of ids) {
+                try { await fetch(`https://rslaf-backend.onrender.com/orders/public/${id}`, { method: 'DELETE' }); } catch {}
+              }
+            } catch {}
+            clearLocal();
+            return;
+          }
+          throw new Error('Server clear failed');
+        })
+        .catch(err => {
+          console.error('❌ Failed to clear on server, clearing locally as fallback', err);
+          clearLocal();
+        });
+    } else {
+      clearLocal();
     }
   };
 

@@ -52,16 +52,21 @@ const Orders = () => {
     try {
       let allOrders = [];
 
-      // PRIORITY 1: Try shared API server (localhost:3001) - this connects customer and admin portals
+      // PRIORITY 1: Try shared API server (localhost:3001 locally, or main API on production)
       try {
-        const sharedApiResponse = await fetch('http://localhost:3001/api/orders');
+        const isProduction = window.location.hostname.includes('onrender.com');
+        const apiUrl = isProduction 
+          ? 'https://rslaf-backend.onrender.com/orders'
+          : 'http://localhost:3001/api/orders';
+        
+        const sharedApiResponse = await fetch(apiUrl);
         if (sharedApiResponse.ok) {
           const sharedData = await sharedApiResponse.json();
-          allOrders = sharedData.data || [];
-          console.log('✅ Shared API orders fetched:', allOrders.length);
+          allOrders = Array.isArray(sharedData) ? sharedData : (sharedData.data || []);
+          console.log('✅ Orders fetched from API:', allOrders.length);
         }
       } catch (sharedApiError) {
-        console.log('⚠️ Shared API not available, trying main API');
+        console.log('⚠️ API not available, trying fallback');
         
         // PRIORITY 2: Try main API
         try {

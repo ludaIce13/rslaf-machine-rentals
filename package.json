@@ -8,7 +8,16 @@
     "build": "echo 'Backend build complete'",
     "install-all": "pip install -r requirements.txt && cd frontend && npm install && cd ../customer-portal && npm install"
   },
-  "keywords": ["equipment", "rental", "rslaf", "sierra-leone"],
+  "keywords": [
+    "equipment",
+    "rental",
+    "rslaf",
+    "sierra-leone"
+  ],
   "author": "RSLAF Machine Rentals",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
 }

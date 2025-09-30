@@ -47,9 +47,11 @@ const Payment = () => {
 
   const initiateUnPuntoPayment = async () => {
     setProcessing(true);
-    setPaymentStep('ussd');
     
     try {
+      console.log('🔄 Initiating Un Punto payment...');
+      console.log('📊 Amount:', bookingData.totalPrice);
+      
       const response = await fetch('https://odprta-tocka.onrender.com/api/initiate-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,9 +61,14 @@ const Payment = () => {
         })
       });
 
+      console.log('📡 Un Punto API Response Status:', response.status);
       const data = await response.json();
+      console.log('📊 Un Punto API Response Data:', data);
       
       if (response.ok && data.reqstatus === 'completed') {
+        console.log('✅ USSD Code:', data.ussdCode);
+        console.log('✅ Transaction ID:', data.transactionId);
+        
         setUssdCode(data.ussdCode);
         setTransactionId(data.transactionId);
         setPaymentStep('ussd');
@@ -72,12 +79,19 @@ const Payment = () => {
         }, 30000);
         
       } else {
-        throw new Error(data.message || 'Failed to initiate payment');
+        console.error('❌ Un Punto API Error:', data);
+        throw new Error(data.message || 'Failed to initiate payment. Please try again.');
       }
     } catch (error) {
-      console.error('Un Punto payment error:', error);
-      alert(`Payment initiation failed: ${error.message}`);
-      setPaymentStep('initial');
+      console.error('❌ Un Punto payment error:', error);
+      setPaymentFeedback({
+        show: true,
+        type: 'failed',
+        message: `Payment initiation failed: ${error.message}. Please try another payment method or contact support.`,
+        orderId: bookingData.orderId,
+        transactionId: null
+      });
+      setPaymentStep('failed');
     } finally {
       setProcessing(false);
     }
@@ -192,8 +206,13 @@ const Payment = () => {
 
       // Try to update order via API, fallback to demo mode
       try {
-        // First try shared API server (localhost:3001)
-        const sharedApiResponse = await fetch(`http://localhost:3001/api/orders/${bookingData.orderId}`, {
+        // Determine API URL based on environment
+        const isProduction = window.location.hostname.includes('onrender.com');
+        const apiUrl = isProduction 
+          ? `https://rslaf-backend.onrender.com/orders/${bookingData.orderId}`
+          : `http://localhost:3001/api/orders/${bookingData.orderId}`;
+        
+        const sharedApiResponse = await fetch(apiUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

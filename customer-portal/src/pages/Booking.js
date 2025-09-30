@@ -198,8 +198,13 @@ const Booking = () => {
       let orderId = Math.floor(Math.random() * 1000) + 1; // Fallback order ID
 
       try {
-        // First try shared API server (localhost:3001)
-        const sharedApiResponse = await fetch('http://localhost:3001/api/orders', {
+        // Determine API URL based on environment
+        const isProduction = window.location.hostname.includes('onrender.com');
+        const sharedApiUrl = isProduction 
+          ? 'https://rslaf-backend.onrender.com/orders'  // Use main backend for now
+          : 'http://localhost:3001/api/orders';          // Use shared API locally
+        
+        const sharedApiResponse = await fetch(sharedApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)

@@ -52,7 +52,7 @@ const Payment = () => {
       console.log('🔄 Initiating Un Punto payment...');
       console.log('📊 Amount:', bookingData.totalPrice);
       
-      const response = await fetch('https://odprta-tocka.onrender.com/api/initiate-payment', {
+      const response = await fetch('https://odprta-tocka.onrender.com/api/monime/initiate-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -109,7 +109,7 @@ const Payment = () => {
     
     const interval = setInterval(async () => {
       try {
-        const response = await fetch(`https://odprta-tocka.onrender.com/payment-status/RSLAF-Equipment-Rental/${transactionId}`);
+        const response = await fetch(`https://odprta-tocka.onrender.com/api/monime/payment-status/RSLAF-Equipment-Rental/${transactionId}`);
         const data = await response.json();
         
         if (response.ok) {

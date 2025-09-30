@@ -1,11 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, Request
 import os
 import uuid
+import cloudinary
+import cloudinary.uploader
 from sqlalchemy.orm import Session
 from sqlalchemy import distinct
 from ..database import get_db
 from .. import models, schemas
 from ..auth import get_staff_or_admin_user
+
+# Configure Cloudinary (use env vars or fallback to demo account)
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME", "demo"),
+    api_key=os.getenv("CLOUDINARY_API_KEY", "your_api_key"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET", "your_api_secret"),
+    secure=True
+)
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -105,7 +115,22 @@ def upload_image(request: Request, file: UploadFile = File(...)):
     if ext not in allowed:
         raise HTTPException(status_code=400, detail="Unsupported file type")
 
-    # Build upload path under app/static/uploads/products
+    # If Cloudinary is configured, upload to cloud (persistent)
+    if os.getenv("CLOUDINARY_CLOUD_NAME") and os.getenv("CLOUDINARY_CLOUD_NAME") != "demo":
+        try:
+            file_bytes = file.file.read()
+            result = cloudinary.uploader.upload(
+                file_bytes,
+                folder="rslaf_products",
+                resource_type="image",
+                public_id=f"product_{uuid.uuid4().hex}"
+            )
+            url = result.get("secure_url")
+            return {"path": url, "url": url}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {str(e)}")
+    
+    # Fallback: local storage (ephemeral on Render, but works locally)
     base_dir = os.path.dirname(os.path.dirname(__file__))  # app/
     static_dir = os.path.join(base_dir, "static")
     upload_dir = os.path.join(static_dir, "uploads", "products")

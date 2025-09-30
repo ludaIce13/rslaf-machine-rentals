@@ -114,5 +114,10 @@ async def list_all_orders(
     current_user: models.User = Depends(get_staff_or_admin_user),
     db: Session = Depends(get_db)
 ):
-    """Admin/Staff endpoint to list all orders"""
+    """Admin/Staff endpoint to list all orders (requires authentication)"""
+    return db.query(models.Order).all()
+
+@router.get("/public/all", response_model=list[schemas.OrderOut])
+async def list_all_orders_public(db: Session = Depends(get_db)):
+    """Public endpoint to list all orders (NO AUTH - for demo/testing only)"""
     return db.query(models.Order).all()

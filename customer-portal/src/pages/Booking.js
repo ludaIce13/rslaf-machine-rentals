@@ -201,8 +201,8 @@ const Booking = () => {
         // Determine API URL based on environment
         const isProduction = window.location.hostname.includes('onrender.com');
         const sharedApiUrl = isProduction 
-          ? 'https://rslaf-backend.onrender.com/orders'  // Use main backend for now
-          : 'http://localhost:3001/api/orders';          // Use shared API locally
+          ? 'https://rslaf-backend.onrender.com/orders'  // Use main backend (requires auth)
+          : 'http://localhost:3001/api/orders';           // Use shared API locally
         
         const sharedApiResponse = await fetch(sharedApiUrl, {
           method: 'POST',

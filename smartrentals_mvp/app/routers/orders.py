@@ -1,63 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
 from ..database import get_db
 from .. import models, schemas
 from ..utils import is_available, calculate_reservations_total, rental_hours
 from ..auth import get_current_active_user, get_staff_or_admin_user
 
-router = APIRouter(prefix="/orders", tags=["orders"])
+router = APIRouter(prefix="/orders", tags=["orders"]) 
 
-@router.post("", response_model=schemas.OrderOut)
-async def create_order(
-    payload: schemas.OrderCreate,
-    current_user: models.User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    """Create order for current authenticated user"""
-    # Check if user has a customer profile
-    if not current_user.customer_profile:
-        raise HTTPException(status_code=400, detail="User must have a customer profile to create orders")
-
-    # Basic availability check and constraints for each reservation request
-    for r in payload.reservations:
-        if r.end_date <= r.start_date:
-            raise HTTPException(status_code=400, detail="Reservation end_date must be after start_date")
-        if not is_available(db, r.inventory_item_id, r.start_date, r.end_date):
-            raise HTTPException(status_code=409, detail=f"Item {r.inventory_item_id} not available for the selected period.")
-        # Enforce product min/max hours if configured
-        inv = db.query(models.InventoryItem).get(r.inventory_item_id)
-        if not inv:
-            raise HTTPException(status_code=404, detail=f"Inventory item {r.inventory_item_id} not found")
-        product = db.query(models.Product).get(inv.product_id)
-        if not product:
-            raise HTTPException(status_code=404, detail=f"Product for item {r.inventory_item_id} not found")
-        hrs = rental_hours(r.start_date, r.end_date)
-        if getattr(product, 'min_hours', None) and hrs < product.min_hours:
-            raise HTTPException(status_code=400, detail=f"Minimum rental is {product.min_hours} hour(s)")
-        if getattr(product, 'max_hours', None) and product.max_hours and hrs > product.max_hours:
-            raise HTTPException(status_code=400, detail=f"Maximum rental is {product.max_hours} hour(s)")
-
-    order = models.Order(customer_id=current_user.customer_profile.id)
-    db.add(order)
-    db.commit()
-    db.refresh(order)
-
-    # Create reservations
-    for r in payload.reservations:
-        res = models.Reservation(order_id=order.id, inventory_item_id=r.inventory_item_id, start_date=r.start_date, end_date=r.end_date)
-        db.add(res)
-    db.commit()
-
-    # Reload reservations and compute totals
-    reservations = db.query(models.Reservation).filter(models.Reservation.order_id == order.id).all()
-    subtotal = calculate_reservations_total(db, reservations)
-    order.subtotal = subtotal
-    order.total = subtotal  # placeholder for taxes/fees/discounts
-    db.commit()
-
-    db.refresh(order)
-    return order
 
 @router.get("/my", response_model=list[schemas.OrderOut])
 async def get_my_orders(
@@ -121,3 +70,84 @@ async def list_all_orders(
 async def list_all_orders_public(db: Session = Depends(get_db)):
     """Public endpoint to list all orders (NO AUTH - for demo/testing only)"""
     return db.query(models.Order).all()
+
+# ---------------------------
+# Public demo endpoints (no auth)
+# ---------------------------
+
+@router.post("/public/create-simple")
+async def public_create_simple_order(payload: dict, db: Session = Depends(get_db)):
+    """
+    Create a minimal order without authentication for demo purposes.
+    Expected payload keys (all optional, best-effort):
+    - name, phone, email
+    - total_price (float), payment_method (str)
+    - equipment_name (str)
+    - start_date (str/datetime), end_date (str/datetime), total_hours (float)
+    """
+    # Find or create a customer by phone/email/name
+    name = payload.get("name") or payload.get("customer_name") or "Walk-in Customer"
+    phone = payload.get("phone") or "unknown"
+    email = payload.get("email") or f"guest_{phone}@example.com"
+
+    customer = (
+        db.query(models.Customer)
+        .filter(models.Customer.phone == phone)
+        .first()
+    )
+    if not customer:
+        customer = models.Customer(name=name, email=email, phone=phone)
+        db.add(customer)
+        db.commit()
+        db.refresh(customer)
+
+    # Create a very simple order
+    order = models.Order(customer_id=customer.id)
+    # Totals
+    try:
+        total = float(payload.get("total_price") or payload.get("total") or 0.0)
+    except Exception:
+        total = 0.0
+    order.subtotal = total
+    order.total = total
+
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+
+    return {"id": order.id}
+
+
+@router.put("/public/update/{order_id}")
+async def public_update_order(order_id: int, payload: dict, db: Session = Depends(get_db)):
+    """
+    Update order status and optionally record a payment, without auth (demo only).
+    Accepts keys: status, payment_status, delivery_status, payment_details {paymentMethod, amount, transactionId}
+    """
+    order = db.query(models.Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    # Update basic status if provided
+    status = payload.get("status")
+    if status:
+        order.status = status
+
+    # Record payment if provided
+    details = payload.get("payment_details") or {}
+    method = details.get("paymentMethod") or payload.get("payment_method")
+    amount = details.get("amount") or payload.get("amount")
+    reference = details.get("transactionId") or payload.get("transactionId")
+
+    if method and amount is not None and reference:
+        try:
+            amt = float(amount)
+        except Exception:
+            amt = 0.0
+        payment = models.Payment(order_id=order.id, method=str(method), amount=amt, reference=str(reference))
+        db.add(payment)
+
+    db.commit()
+    db.refresh(order)
+
+    return {"ok": True, "order_id": order.id}

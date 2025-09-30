@@ -201,13 +201,26 @@ const Booking = () => {
         // Determine API URL based on environment
         const isProduction = window.location.hostname.includes('onrender.com');
         const sharedApiUrl = isProduction 
-          ? 'https://rslaf-backend.onrender.com/orders'  // Use main backend (requires auth)
-          : 'http://localhost:3001/api/orders';           // Use shared API locally
-        
+          ? 'https://rslaf-backend.onrender.com/orders/public/create-simple'  // Public demo endpoint (no auth)
+          : 'http://localhost:3001/api/orders';                                // Local shared API
+
+        // Build minimal payload for public create endpoint
+        const publicPayload = {
+          name: customerInfo.name,
+          email: customerInfo.email,
+          phone: customerInfo.phone,
+          total_price: totalPrice,
+          payment_method: paymentMethod,
+          equipment_name: product.name,
+          start_date: startDate,
+          end_date: endDate,
+          total_hours: rentalType === 'dateRange' ? calculatedHours : totalHours
+        };
+
         const sharedApiResponse = await fetch(sharedApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
+          body: JSON.stringify(isProduction ? publicPayload : orderData)
         });
 
         if (sharedApiResponse.ok) {

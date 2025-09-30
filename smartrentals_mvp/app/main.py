@@ -38,7 +38,15 @@ run_startup_migrations()
 app = FastAPI(title="SmartRentals API", version="1.0.0")
 
 # CORS middleware for frontend integration
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:3001,http://localhost:3002").split(",")
+# Include production Render domains by default so deployments work out-of-the-box.
+default_cors = ",".join([
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "https://rslaf-admin.onrender.com",
+    "https://rslaf-customer.onrender.com",
+])
+cors_origins = os.getenv("CORS_ORIGINS", default_cors).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,

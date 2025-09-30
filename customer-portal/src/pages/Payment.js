@@ -209,7 +209,7 @@ const Payment = () => {
         // Determine API URL based on environment
         const isProduction = window.location.hostname.includes('onrender.com');
         const apiUrl = isProduction 
-          ? `https://rslaf-backend.onrender.com/orders/${bookingData.orderId}`
+          ? `https://rslaf-backend.onrender.com/orders/public/update/${bookingData.orderId}`
           : `http://localhost:3001/api/orders/${bookingData.orderId}`;
         
         const sharedApiResponse = await fetch(apiUrl, {
@@ -225,7 +225,7 @@ const Payment = () => {
         });
 
         if (sharedApiResponse.ok) {
-          console.log('✅ Order updated via shared API');
+          console.log('✅ Order updated via API');
         } else {
           throw new Error('Shared API failed, trying main API');
         }
@@ -233,7 +233,7 @@ const Payment = () => {
         console.log('⚠️ Shared API not available, trying main API');
         
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/orders/${bookingData.orderId}`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders/public/update/${bookingData.orderId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -249,9 +249,9 @@ const Payment = () => {
             throw new Error('API update failed');
           }
           
-          console.log('✅ Order updated via main API');
+          console.log('✅ Order updated via main API (public)');
         } catch (apiError) {
-          console.log('📱 API not available, updating local storage');
+          console.log('📱 API not available, updating local storage', apiError);
           
           // Update order in localStorage
           const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');

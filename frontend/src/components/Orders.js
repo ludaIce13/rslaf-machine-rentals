@@ -66,8 +66,22 @@ const Orders = () => {
         if (sharedApiResponse.ok) {
           const sharedData = await sharedApiResponse.json();
           allOrders = Array.isArray(sharedData) ? sharedData : (sharedData.data || []);
+          // Normalize shape to ensure UI fields exist
+          allOrders = allOrders.map((o) => {
+            const customer_info = o.customer_info || {
+              name: o.customer_name || o.customer?.name || '',
+              email: o.customer_email || o.customer?.email || '',
+              phone: o.customer_phone || o.customer?.phone || ''
+            };
+            return {
+              ...o,
+              customer_info,
+              equipment_name: o.equipment_name || o.product?.name || o.item_name || '',
+              total_price: typeof o.total_price === 'number' ? o.total_price : (o.total ?? 0),
+            };
+          });
           console.log('✅ Orders fetched from API:', allOrders.length);
-          console.log('📊 Orders data:', allOrders);
+          console.log('📊 Orders data (normalized):', allOrders);
         } else {
           console.error('❌ API returned error:', sharedApiResponse.status);
         }
@@ -95,7 +109,22 @@ const Orders = () => {
       }
       
       console.log('📊 Total orders to display:', allOrders.length);
-      setOrders(allOrders);
+      // Final normalization pass (covers localStorage/demo shapes)
+      const normalized = (allOrders || []).map((o) => {
+        const customer_info = o.customer_info || {
+          name: o.customer_name || o.customer?.name || '',
+          email: o.customer_email || o.customer?.email || '',
+          phone: o.customer_phone || o.customer?.phone || ''
+        };
+        return {
+          ...o,
+          customer_info,
+          equipment_name: o.equipment_name || o.product?.name || o.item_name || '',
+          total_price: typeof o.total_price === 'number' ? o.total_price : (o.total ?? 0),
+          status: (o.status || '').toString()
+        };
+      });
+      setOrders(normalized);
 
     } catch (error) {
       console.error('❌ Error in fetchOrders:', error);

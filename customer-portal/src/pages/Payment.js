@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { formatCurrency, convertUSDToSLL } from '../utils/currency';
 import './Payment.css';
 
 const Payment = () => {
@@ -198,13 +199,11 @@ const Payment = () => {
       const paymentDetails = {
         transactionId: transactionId || paymentData.transactionId,
         paymentMethod: bookingData.paymentMethod,
-        paymentStatus: 'completed',
-        paymentDate: new Date().toISOString(),
         amount: bookingData.totalPrice,
         currency: 'SLL' // Sierra Leone Leones
       };
 
-      // Try to update order via API, fallback to demo mode
+      // Try to update order via API - backend will auto-set status to paid_awaiting_delivery/pickup
       try {
         // Determine API URL based on environment
         const isProduction = window.location.hostname.includes('onrender.com');
@@ -216,10 +215,8 @@ const Payment = () => {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            status: 'paid',
-            payment_status: 'completed',
-            delivery_status: 'ready for delivery',
             payment_details: paymentDetails,
+            delivery_method: bookingData.deliveryMethod || 'pickup', // 'pickup' or 'delivery'
             updated_at: new Date().toISOString()
           })
         });
@@ -237,10 +234,8 @@ const Payment = () => {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              status: 'paid',
-              payment_status: 'completed',
-              delivery_status: 'ready for delivery',
               payment_details: paymentDetails,
+              delivery_method: bookingData.deliveryMethod || 'pickup',
               updated_at: new Date().toISOString()
             })
           });

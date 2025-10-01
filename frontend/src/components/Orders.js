@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
+import { formatCurrency, getDisplayAmount } from '../utils/currency';
 
 const Orders = () => {
   const navigate = useNavigate();
@@ -109,16 +110,27 @@ const Orders = () => {
     const statusStyles = {
       pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
       paid: 'bg-green-100 text-green-800 border border-green-200',
+      paid_awaiting_delivery: 'bg-green-100 text-green-800 border border-green-200',
+      paid_awaiting_pickup: 'bg-green-100 text-green-800 border border-green-200',
       confirmed: 'bg-blue-100 text-blue-800 border border-blue-200',
+      rented: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
       'ready for delivery': 'bg-purple-100 text-purple-800 border border-purple-200',
       'picked up': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
       returned: 'bg-gray-100 text-gray-800 border border-gray-200',
       cancelled: 'bg-red-100 text-red-800 border border-red-200'
     };
 
+    const statusLabels = {
+      paid_awaiting_delivery: 'Paid / Awaiting Delivery',
+      paid_awaiting_pickup: 'Paid / Awaiting Pickup',
+      rented: 'Rented (Active)',
+    };
+
+    const label = statusLabels[status.toLowerCase()] || (status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' '));
+
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusStyles[status.toLowerCase()] || 'bg-gray-100 text-gray-800'}`}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {label}
       </span>
     );
   };
@@ -334,15 +346,6 @@ const Orders = () => {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={clearAllOrders}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Clear All Orders
-          </button>
-          <button
             onClick={fetchOrders}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700"
           >
@@ -474,12 +477,22 @@ const Orders = () => {
                       <div className="flex flex-col gap-1">
                         {getStatusBadge(order.status)}
                         {getDeliveryBadge(order.delivery_status)}
+                        {order.is_late_delivery && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200">
+                            ⚠️ Late Delivery
+                          </span>
+                        )}
+                        {order.is_late_return && (
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
+                            ⏰ Late Return ({order.extra_billing_hours?.toFixed(1)}h extra)
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="font-medium text-gray-900">
-                          ${order.total_price?.toFixed(2) || order.total_amount?.toFixed(2) || '0.00'}
+                          {formatCurrency(getDisplayAmount(order.total_price || order.total_amount || 0, true))}
                         </span>
                         <div className="text-sm text-gray-500">
                           {order.payment_method ? (

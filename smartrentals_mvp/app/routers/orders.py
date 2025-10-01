@@ -95,6 +95,14 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
                 "total_hours": meta.total_hours,
                 "start_date": meta.start_date,
                 "end_date": meta.end_date,
+                # Rental tracking
+                "delivery_method": meta.delivery_method,
+                "delivery_pickup_time": meta.delivery_pickup_time,
+                "expected_return_time": meta.expected_return_time,
+                "actual_return_time": meta.actual_return_time,
+                "is_late_delivery": meta.is_late_delivery,
+                "is_late_return": meta.is_late_return,
+                "extra_billing_hours": meta.extra_billing_hours,
             })
         results.append(row)
     return results
@@ -175,10 +183,15 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
     """
     Update order status and optionally record a payment, without auth (demo only).
     Accepts keys: status, payment_status, delivery_status, payment_details {paymentMethod, amount, transactionId}
+    Also handles rental tracking: delivery_method, delivery_pickup_time, expected_return_time
     """
+    from datetime import datetime, timedelta
+    
     order = db.query(models.Order).get(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+
+    meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == order.id).first()
 
     # Update basic status if provided
     status = payload.get("status")
@@ -199,13 +212,59 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
         payment = models.Payment(order_id=order.id, method=str(method), amount=amt, reference=str(reference))
         db.add(payment)
 
-        # Update public metadata with latest totals/method if exists
-        meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == order.id).first()
+        # Auto-update status to "Paid / Awaiting Delivery" or "Paid / Awaiting Pickup"
+        if meta and meta.delivery_method == "delivery":
+            order.status = "paid_awaiting_delivery"
+        else:
+            order.status = "paid_awaiting_pickup"
+
+        # Update public metadata with latest totals/method
         if meta:
             if method:
                 meta.payment_method = str(method)
             if amount is not None:
                 meta.total_price = amt or meta.total_price
+
+    # Handle delivery/pickup tracking
+    if payload.get("delivery_method") and meta:
+        meta.delivery_method = payload.get("delivery_method")
+    
+    if payload.get("mark_delivered_or_picked_up") and meta:
+        # Mark as delivered/picked up - rental time starts NOW
+        meta.delivery_pickup_time = datetime.utcnow()
+        
+        # Calculate expected return time based on rental hours
+        if meta.total_hours and meta.total_hours > 0:
+            meta.expected_return_time = datetime.utcnow() + timedelta(hours=meta.total_hours)
+        elif meta.start_date and meta.end_date:
+            meta.expected_return_time = meta.end_date
+        
+        # Update order status
+        order.status = "rented"
+        
+        # Check if delivery was late
+        if meta.expected_delivery_time and datetime.utcnow() > meta.expected_delivery_time:
+            meta.is_late_delivery = True
+    
+    # Handle return tracking
+    if payload.get("mark_returned") and meta:
+        meta.actual_return_time = datetime.utcnow()
+        order.status = "returned"
+        
+        # Calculate extra billing if return is late
+        if meta.expected_return_time and meta.actual_return_time > meta.expected_return_time:
+            meta.is_late_return = True
+            late_delta = meta.actual_return_time - meta.expected_return_time
+            meta.extra_billing_hours = late_delta.total_seconds() / 3600.0
+    
+    # Set expected delivery time if provided
+    if payload.get("expected_delivery_time") and meta:
+        try:
+            from datetime import datetime as _dt
+            edt = payload.get("expected_delivery_time")
+            meta.expected_delivery_time = _dt.fromisoformat(edt) if isinstance(edt, str) else edt
+        except Exception:
+            pass
 
     db.commit()
     db.refresh(order)
@@ -243,3 +302,46 @@ async def public_delete_all_orders(db: Session = Depends(get_db)):
     db.query(models.Order).delete()
     db.commit()
     return {"ok": True}
+
+
+@router.get("/public/check-late-returns")
+async def check_late_returns(customer_phone: str = None, db: Session = Depends(get_db)):
+    """
+    Check for active rentals that are past their expected return time.
+    Returns list of late rentals for customer portal warnings.
+    """
+    from datetime import datetime
+    
+    # Query orders with status 'rented' where expected_return_time has passed
+    late_rentals = []
+    
+    query = db.query(models.Order, models.PublicOrderMeta).join(
+        models.PublicOrderMeta, models.Order.id == models.PublicOrderMeta.order_id
+    ).filter(
+        models.Order.status == "rented",
+        models.PublicOrderMeta.expected_return_time.isnot(None)
+    )
+    
+    if customer_phone:
+        query = query.filter(models.PublicOrderMeta.customer_phone == customer_phone)
+    
+    results = query.all()
+    
+    for order, meta in results:
+        if meta.expected_return_time and datetime.utcnow() > meta.expected_return_time:
+            # Calculate extra hours
+            late_delta = datetime.utcnow() - meta.expected_return_time
+            extra_hours = late_delta.total_seconds() / 3600.0
+            
+            late_rentals.append({
+                "order_id": order.id,
+                "equipment_name": meta.equipment_name,
+                "expected_return_time": meta.expected_return_time,
+                "hours_overdue": round(extra_hours, 2),
+                "customer_name": meta.customer_name,
+                "customer_phone": meta.customer_phone,
+                "total_price": meta.total_price,
+                "total_hours": meta.total_hours,
+            })
+    
+    return {"late_rentals": late_rentals, "count": len(late_rentals)}

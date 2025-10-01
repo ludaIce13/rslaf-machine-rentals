@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 // Layout Components
 import Header from './components/Header';
 import Footer from './components/Footer';
+import LateReturnWarning from './components/LateReturnWarning';
 
 // Page Components
 import Home from './pages/Home';
@@ -90,6 +91,9 @@ function App() {
           
           <Header />
           <main className="main-content">
+            <div className="container mx-auto px-4">
+              <LateReturnWarning />
+            </div>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />

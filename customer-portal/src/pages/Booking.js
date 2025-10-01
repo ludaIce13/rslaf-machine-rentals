@@ -205,6 +205,12 @@ const Booking = () => {
           : 'http://localhost:3001/api/orders';                                // Local shared API
 
         // Build minimal payload for public create endpoint
+        // Format dates as ISO strings
+        const formatDateTime = (date, time) => {
+          if (!date) return null;
+          return new Date(`${date}T${time || '00:00'}:00`).toISOString();
+        };
+
         const publicPayload = {
           name: customerInfo.name,
           email: customerInfo.email,
@@ -212,9 +218,9 @@ const Booking = () => {
           total_price: totalPrice,
           payment_method: paymentMethod,
           equipment_name: product.name,
-          start_date: startDate,
-          end_date: endDate,
-          total_hours: rentalType === 'dateRange' ? calculatedHours : totalHours
+          start_date: rentalType === 'dateRange' ? formatDateTime(startDate, startTime) : new Date().toISOString(),
+          end_date: rentalType === 'dateRange' ? formatDateTime(endDate, endTime) : (calculatedEndDate ? new Date(calculatedEndDate).toISOString() : null),
+          total_hours: rentalType === 'dateRange' ? calculatedHours : parseFloat(totalHours)
         };
 
         const sharedApiResponse = await fetch(sharedApiUrl, {

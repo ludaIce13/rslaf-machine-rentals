@@ -85,24 +85,24 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
         if meta:
             row.update({
                 "customer_info": {
-                    "name": meta.customer_name,
-                    "email": meta.customer_email,
-                    "phone": meta.customer_phone,
+                    "name": getattr(meta, 'customer_name', ''),
+                    "email": getattr(meta, 'customer_email', ''),
+                    "phone": getattr(meta, 'customer_phone', ''),
                 },
-                "equipment_name": meta.equipment_name,
-                "payment_method": meta.payment_method,
-                "total_price": meta.total_price,
-                "total_hours": meta.total_hours,
-                "start_date": meta.start_date,
-                "end_date": meta.end_date,
-                # Rental tracking
-                "delivery_method": meta.delivery_method,
-                "delivery_pickup_time": meta.delivery_pickup_time,
-                "expected_return_time": meta.expected_return_time,
-                "actual_return_time": meta.actual_return_time,
-                "is_late_delivery": meta.is_late_delivery,
-                "is_late_return": meta.is_late_return,
-                "extra_billing_hours": meta.extra_billing_hours,
+                "equipment_name": getattr(meta, 'equipment_name', ''),
+                "payment_method": getattr(meta, 'payment_method', ''),
+                "total_price": getattr(meta, 'total_price', 0.0),
+                "total_hours": getattr(meta, 'total_hours', 0.0),
+                "start_date": getattr(meta, 'start_date', None),
+                "end_date": getattr(meta, 'end_date', None),
+                # Rental tracking (gracefully handle if columns don't exist yet)
+                "delivery_method": getattr(meta, 'delivery_method', 'pickup'),
+                "delivery_pickup_time": getattr(meta, 'delivery_pickup_time', None),
+                "expected_return_time": getattr(meta, 'expected_return_time', None),
+                "actual_return_time": getattr(meta, 'actual_return_time', None),
+                "is_late_delivery": getattr(meta, 'is_late_delivery', False),
+                "is_late_return": getattr(meta, 'is_late_return', False),
+                "extra_billing_hours": getattr(meta, 'extra_billing_hours', 0.0),
             })
         results.append(row)
     return results
@@ -213,7 +213,8 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
         db.add(payment)
 
         # Auto-update status to "Paid / Awaiting Delivery" or "Paid / Awaiting Pickup"
-        if meta and meta.delivery_method == "delivery":
+        delivery_method = getattr(meta, 'delivery_method', 'pickup') if meta else 'pickup'
+        if delivery_method == "delivery":
             order.status = "paid_awaiting_delivery"
         else:
             order.status = "paid_awaiting_pickup"
@@ -225,37 +226,48 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
             if amount is not None:
                 meta.total_price = amt or meta.total_price
 
-    # Handle delivery/pickup tracking
+    # Handle delivery/pickup tracking (safely check if attributes exist)
     if payload.get("delivery_method") and meta:
-        meta.delivery_method = payload.get("delivery_method")
+        try:
+            meta.delivery_method = payload.get("delivery_method")
+        except AttributeError:
+            pass  # Column doesn't exist yet
     
     if payload.get("mark_delivered_or_picked_up") and meta:
-        # Mark as delivered/picked up - rental time starts NOW
-        meta.delivery_pickup_time = datetime.utcnow()
-        
-        # Calculate expected return time based on rental hours
-        if meta.total_hours and meta.total_hours > 0:
-            meta.expected_return_time = datetime.utcnow() + timedelta(hours=meta.total_hours)
-        elif meta.start_date and meta.end_date:
-            meta.expected_return_time = meta.end_date
-        
-        # Update order status
-        order.status = "rented"
-        
-        # Check if delivery was late
-        if meta.expected_delivery_time and datetime.utcnow() > meta.expected_delivery_time:
-            meta.is_late_delivery = True
+        try:
+            # Mark as delivered/picked up - rental time starts NOW
+            meta.delivery_pickup_time = datetime.utcnow()
+            
+            # Calculate expected return time based on rental hours
+            if getattr(meta, 'total_hours', 0) and meta.total_hours > 0:
+                meta.expected_return_time = datetime.utcnow() + timedelta(hours=meta.total_hours)
+            elif getattr(meta, 'start_date', None) and getattr(meta, 'end_date', None):
+                meta.expected_return_time = meta.end_date
+            
+            # Update order status
+            order.status = "rented"
+            
+            # Check if delivery was late
+            if getattr(meta, 'expected_delivery_time', None) and datetime.utcnow() > meta.expected_delivery_time:
+                meta.is_late_delivery = True
+        except AttributeError:
+            pass  # Columns don't exist yet
     
     # Handle return tracking
     if payload.get("mark_returned") and meta:
-        meta.actual_return_time = datetime.utcnow()
-        order.status = "returned"
-        
-        # Calculate extra billing if return is late
-        if meta.expected_return_time and meta.actual_return_time > meta.expected_return_time:
-            meta.is_late_return = True
-            late_delta = meta.actual_return_time - meta.expected_return_time
-            meta.extra_billing_hours = late_delta.total_seconds() / 3600.0
+        try:
+            meta.actual_return_time = datetime.utcnow()
+            order.status = "returned"
+            
+            # Calculate extra billing if return is late
+            expected = getattr(meta, 'expected_return_time', None)
+            actual = getattr(meta, 'actual_return_time', None)
+            if expected and actual and actual > expected:
+                meta.is_late_return = True
+                late_delta = actual - expected
+                meta.extra_billing_hours = late_delta.total_seconds() / 3600.0
+        except AttributeError:
+            pass  # Columns don't exist yet
     
     # Set expected delivery time if provided
     if payload.get("expected_delivery_time") and meta:
@@ -263,8 +275,8 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
             from datetime import datetime as _dt
             edt = payload.get("expected_delivery_time")
             meta.expected_delivery_time = _dt.fromisoformat(edt) if isinstance(edt, str) else edt
-        except Exception:
-            pass
+        except (AttributeError, Exception):
+            pass  # Column doesn't exist yet or invalid format
 
     db.commit()
     db.refresh(order)

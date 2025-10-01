@@ -135,61 +135,74 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
     - equipment_name (str)
     - start_date (str/datetime), end_date (str/datetime), total_hours (float)
     """
-    # Find or create a customer by phone/email/name
-    name = payload.get("name") or payload.get("customer_name") or "Walk-in Customer"
-    phone = payload.get("phone") or "unknown"
-    email = payload.get("email") or f"guest_{phone}@example.com"
+    try:
+        # Find or create a customer by phone/email/name
+        name = payload.get("name") or payload.get("customer_name") or "Walk-in Customer"
+        phone = payload.get("phone") or "unknown"
+        email = payload.get("email") or f"guest_{phone}@example.com"
 
-    customer = (
-        db.query(models.Customer)
-        .filter(models.Customer.phone == phone)
-        .first()
-    )
-    if not customer:
-        customer = models.Customer(name=name, email=email, phone=phone)
-        db.add(customer)
+        customer = (
+            db.query(models.Customer)
+            .filter(models.Customer.phone == phone)
+            .first()
+        )
+        if not customer:
+            customer = models.Customer(name=name, email=email, phone=phone)
+            db.add(customer)
+            db.commit()
+            db.refresh(customer)
+
+        # Create a very simple order
+        order = models.Order(customer_id=customer.id)
+        # Totals
+        try:
+            total = float(payload.get("total_price") or payload.get("total") or 0.0)
+        except Exception:
+            total = 0.0
+        order.subtotal = total
+        order.total = total
+
+        db.add(order)
         db.commit()
-        db.refresh(customer)
+        db.refresh(order)
 
-    # Create a very simple order
-    order = models.Order(customer_id=customer.id)
-    # Totals
-    try:
-        total = float(payload.get("total_price") or payload.get("total") or 0.0)
-    except Exception:
-        total = 0.0
-    order.subtotal = total
-    order.total = total
+        # Store demo/public metadata for admin display
+        try:
+            meta = models.PublicOrderMeta(
+                order_id=order.id,
+                customer_name=name,
+                customer_email=email,
+                customer_phone=phone,
+                equipment_name=str(payload.get("equipment_name") or ""),
+                payment_method=str(payload.get("payment_method") or ""),
+                total_price=total,
+                total_hours=float(payload.get("total_hours") or 0.0),
+            )
+            # Attempt to parse dates if provided (ISO strings recommended)
+            try:
+                from datetime import datetime as _dt
+                sd = payload.get("start_date")
+                ed = payload.get("end_date")
+                if sd:
+                    meta.start_date = _dt.fromisoformat(sd.replace('Z', '+00:00'))
+                if ed:
+                    meta.end_date = _dt.fromisoformat(ed.replace('Z', '+00:00'))
+            except Exception as e:
+                print(f"Warning: Could not parse dates: {e}")
+                pass
 
-    db.add(order)
-    db.commit()
-    db.refresh(order)
+            db.add(meta)
+            db.commit()
+        except Exception as meta_error:
+            print(f"Warning: Could not create PublicOrderMeta: {meta_error}")
+            # Continue anyway - order was created
+            pass
 
-    # Store demo/public metadata for admin display
-    meta = models.PublicOrderMeta(
-        order_id=order.id,
-        customer_name=name,
-        customer_email=email,
-        customer_phone=phone,
-        equipment_name=str(payload.get("equipment_name") or ""),
-        payment_method=str(payload.get("payment_method") or ""),
-        total_price=total,
-        total_hours=float(payload.get("total_hours") or 0.0),
-    )
-    # Attempt to parse dates if provided (ISO strings recommended)
-    try:
-        from datetime import datetime as _dt
-        sd = payload.get("start_date")
-        ed = payload.get("end_date")
-        meta.start_date = _dt.fromisoformat(sd) if sd else None
-        meta.end_date = _dt.fromisoformat(ed) if ed else None
-    except Exception:
-        pass
-
-    db.add(meta)
-    db.commit()
-
-    return {"id": order.id}
+        return {"id": order.id}
+    except Exception as e:
+        print(f"Error creating order: {e}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
 
 
 @router.put("/public/update/{order_id}")

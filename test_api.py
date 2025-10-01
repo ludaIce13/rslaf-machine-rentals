@@ -4,7 +4,9 @@ import sys
 def print_response(response):
     print(f"Status: {response.status_code}")
     try:
-        print("Response:", response.json())
+        import json
+        data = response.json()
+        print("Response:", json.dumps(data, indent=2))
     except ValueError:
         print("Response (text):", response.text)
 

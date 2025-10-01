@@ -69,43 +69,57 @@ async def list_all_orders(
 @router.get("/public/all")
 async def list_all_orders_public(db: Session = Depends(get_db)):
     """Public endpoint to list all orders (NO AUTH) with display metadata merged in."""
-    orders = db.query(models.Order).all()
-    # Build a merged list preserving extra fields for the admin UI
-    results = []
-    for o in orders:
-        meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == o.id).first()
-        row = {
-            "id": o.id,
-            "customer_id": o.customer_id,
-            "status": o.status,
-            "created_at": o.created_at,
-            "subtotal": o.subtotal,
-            "total": o.total,
-        }
-        if meta:
-            row.update({
-                "customer_info": {
-                    "name": getattr(meta, 'customer_name', ''),
-                    "email": getattr(meta, 'customer_email', ''),
-                    "phone": getattr(meta, 'customer_phone', ''),
-                },
-                "equipment_name": getattr(meta, 'equipment_name', ''),
-                "payment_method": getattr(meta, 'payment_method', ''),
-                "total_price": getattr(meta, 'total_price', 0.0),
-                "total_hours": getattr(meta, 'total_hours', 0.0),
-                "start_date": getattr(meta, 'start_date', None),
-                "end_date": getattr(meta, 'end_date', None),
-                # Rental tracking (gracefully handle if columns don't exist yet)
-                "delivery_method": getattr(meta, 'delivery_method', 'pickup'),
-                "delivery_pickup_time": getattr(meta, 'delivery_pickup_time', None),
-                "expected_return_time": getattr(meta, 'expected_return_time', None),
-                "actual_return_time": getattr(meta, 'actual_return_time', None),
-                "is_late_delivery": getattr(meta, 'is_late_delivery', False),
-                "is_late_return": getattr(meta, 'is_late_return', False),
-                "extra_billing_hours": getattr(meta, 'extra_billing_hours', 0.0),
-            })
-        results.append(row)
-    return results
+    try:
+        orders = db.query(models.Order).all()
+        # Build a merged list preserving extra fields for the admin UI
+        results = []
+        for o in orders:
+            try:
+                meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == o.id).first()
+                row = {
+                    "id": o.id,
+                    "customer_id": o.customer_id,
+                    "status": str(o.status) if o.status else "pending",
+                    "created_at": o.created_at.isoformat() if o.created_at else None,
+                    "subtotal": float(o.subtotal) if o.subtotal else 0.0,
+                    "total": float(o.total) if o.total else 0.0,
+                }
+                if meta:
+                    try:
+                        row.update({
+                            "customer_info": {
+                                "name": str(getattr(meta, 'customer_name', '') or ''),
+                                "email": str(getattr(meta, 'customer_email', '') or ''),
+                                "phone": str(getattr(meta, 'customer_phone', '') or ''),
+                            },
+                            "equipment_name": str(getattr(meta, 'equipment_name', '') or ''),
+                            "payment_method": str(getattr(meta, 'payment_method', '') or ''),
+                            "total_price": float(getattr(meta, 'total_price', 0.0) or 0.0),
+                            "total_hours": float(getattr(meta, 'total_hours', 0.0) or 0.0),
+                            "start_date": getattr(meta, 'start_date', None).isoformat() if getattr(meta, 'start_date', None) else None,
+                            "end_date": getattr(meta, 'end_date', None).isoformat() if getattr(meta, 'end_date', None) else None,
+                            # Rental tracking (gracefully handle if columns don't exist yet)
+                            "delivery_method": str(getattr(meta, 'delivery_method', 'pickup') or 'pickup'),
+                            "delivery_pickup_time": getattr(meta, 'delivery_pickup_time', None).isoformat() if getattr(meta, 'delivery_pickup_time', None) else None,
+                            "expected_return_time": getattr(meta, 'expected_return_time', None).isoformat() if getattr(meta, 'expected_return_time', None) else None,
+                            "actual_return_time": getattr(meta, 'actual_return_time', None).isoformat() if getattr(meta, 'actual_return_time', None) else None,
+                            "is_late_delivery": bool(getattr(meta, 'is_late_delivery', False)),
+                            "is_late_return": bool(getattr(meta, 'is_late_return', False)),
+                            "extra_billing_hours": float(getattr(meta, 'extra_billing_hours', 0.0) or 0.0),
+                        })
+                    except Exception as e:
+                        # If meta fields fail, skip them but keep the order
+                        print(f"Warning: Failed to serialize meta for order {o.id}: {e}")
+                results.append(row)
+            except Exception as e:
+                # Log but continue with other orders
+                print(f"Warning: Failed to process order {o.id}: {e}")
+                continue
+        return results
+    except Exception as e:
+        # Return empty list instead of 500 error
+        print(f"Error fetching orders: {e}")
+        return []
 
 # ---------------------------
 # Public demo endpoints (no auth)

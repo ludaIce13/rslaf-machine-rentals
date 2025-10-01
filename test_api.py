@@ -19,20 +19,30 @@ def test_endpoint(method, url, **kwargs):
         return None
 
 def main():
-    base_url = "http://localhost:8000"
-    
-    # Test public products endpoint to see image_url
-    print("\n=== Testing Public Products Endpoint ===")
-    response = test_endpoint('GET', f"{base_url}/products")
-    
-    if response and response.status_code == 200:
-        products = response.json()
-        print(f"\nFound {len(products)} products:")
-        for product in products:
-            print(f"Product ID {product.get('id')}: {product.get('name')}")
-            print(f"  image_url: '{product.get('image_url')}'")
-            print(f"  category: '{product.get('category')}'")
-            print("---")
+    base = "https://rslaf-backend.onrender.com"
+
+    # 1) List orders (before)
+    print("\n=== 1) LIST ORDERS (BEFORE) ===")
+    test_endpoint("get", f"{base}/orders/public/all")
+
+    # 2) Create one simple order
+    print("\n=== 2) CREATE TEST ORDER ===")
+    payload = {
+        "name": "Test Customer",
+        "email": "test@example.com",
+        "phone": "+23278000000",
+        "equipment_name": "Test Excavator",
+        "total_price": 25,
+        "payment_method": "orange_money",
+        "start_date": "2025-10-01T09:00:00",
+        "end_date": "2025-10-01T12:00:00",
+        "total_hours": 3
+    }
+    test_endpoint("post", f"{base}/orders/public/create-simple", json=payload)
+
+    # 3) List orders (after)
+    print("\n=== 3) LIST ORDERS (AFTER) ===")
+    test_endpoint("get", f"{base}/orders/public/all")
 
 if __name__ == "__main__":
     print("=== Starting API Tests ===")

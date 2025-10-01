@@ -21,33 +21,47 @@ const Customers = () => {
   const fetchCustomers = async () => {
     setLoading(true);
     try {
-      // Get customers from orders data (same approach as dashboard)
+      // Pull public orders first (no auth)
       let allOrders = [];
-
       try {
-        const response = await api.getOrders();
-        let apiOrders = response.data || [];
-        allOrders = [...allOrders, ...apiOrders];
-      } catch (apiError) {
-        console.log('⚠️ API not available for customers');
+        const isProduction = window.location.hostname.includes('onrender.com');
+        const url = isProduction
+          ? 'https://rslaf-backend.onrender.com/orders/public/all'
+          : 'http://localhost:3001/api/orders';
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          allOrders = Array.isArray(data) ? data : (data.data || []);
+        }
+      } catch (e) {
+        console.log('⚠️ Public orders fetch failed', e);
       }
 
-      // Get demo orders from localStorage (for manually added orders)
+      // Fallback: protected API
+      if (allOrders.length === 0) {
+        try {
+          const response = await api.getOrders();
+          let apiOrders = response.data || [];
+          allOrders = [...allOrders, ...apiOrders];
+        } catch (apiError) {
+          console.log('⚠️ API not available for customers');
+        }
+      }
+
+      // Local fallbacks
       const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-      console.log('💾 Customers - Demo orders from localStorage:', demoOrders.length);
-
-      // ALSO check shared orders from customer portal
       const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-      console.log('🔗 Customers - Shared orders from customer portal:', sharedOrders.length);
-
-      // Combine all real orders
-      allOrders = [...allOrders, ...demoOrders, ...sharedOrders];
+      allOrders = allOrders.length ? allOrders : [...demoOrders, ...sharedOrders];
       console.log('📊 Customers - Total orders to analyze:', allOrders.length);
 
       // Extract unique customers from orders
       const customersMap = new Map();
       allOrders.forEach(order => {
-        const customerInfo = order.customer_info || order.customer || {};
+        const customerInfo = order.customer_info || order.customer || {
+          name: order.customer_name,
+          email: order.customer_email,
+          phone: order.customer_phone,
+        };
         const customerName = customerInfo.name || order.customer_id;
         const customerEmail = customerInfo.email || `${customerName?.toLowerCase().replace(' ', '.')}@example.com`;
         const customerPhone = customerInfo.phone || '+232 78 000000';

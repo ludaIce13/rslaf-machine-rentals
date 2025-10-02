@@ -200,9 +200,10 @@ const Booking = () => {
       try {
         // Determine API URL based on environment
         const isProduction = window.location.hostname.includes('onrender.com');
+        // In production we ONLY use the public create endpoint. No fallbacks allowed.
         const sharedApiUrl = isProduction 
-          ? 'https://rslaf-backend.onrender.com/orders/public/create-simple'  // Public demo endpoint (no auth)
-          : 'http://localhost:3001/api/orders';                                // Local shared API
+          ? 'https://rslaf-backend.onrender.com/orders/public/create-simple'
+          : 'http://localhost:3001/api/orders';
 
         // Build minimal payload for public create endpoint
         // Format dates as ISO strings
@@ -223,49 +224,64 @@ const Booking = () => {
           total_hours: rentalType === 'dateRange' ? calculatedHours : parseFloat(totalHours)
         };
 
+        console.log('[BOOKING] Attempting to create order with payload:', publicPayload);
+        console.log('[BOOKING] POST to:', sharedApiUrl);
+        
         const sharedApiResponse = await fetch(sharedApiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(isProduction ? publicPayload : orderData)
         });
 
+        console.log('[BOOKING] Response status:', sharedApiResponse.status);
+
         if (sharedApiResponse.ok) {
           const createdOrder = await sharedApiResponse.json();
+          if (!createdOrder || !createdOrder.id) {
+            throw new Error('[BOOKING] Backend did not return order id');
+          }
           orderId = createdOrder.id;
-          console.log('✅ Order created via shared API:', orderId);
+          console.log('✅ [BOOKING] Order created successfully! ID:', orderId);
         } else {
-          throw new Error('Shared API failed, trying main API');
+          const errorText = await sharedApiResponse.text();
+          console.error('❌ [BOOKING] API returned error:', sharedApiResponse.status, errorText);
+          throw new Error(`Shared API failed with ${sharedApiResponse.status}: ${errorText}`);
         }
       } catch (sharedApiError) {
-        console.log('⚠️ Shared API not available, trying main API');
-        
+        // In production, do NOT proceed without a real order id
+        const isProduction = window.location.hostname.includes('onrender.com');
+        if (isProduction) {
+          console.error('[BOOKING] Hard stop: could not create order in production', sharedApiError);
+          alert('Could not create your order right now. Please try again in a moment.');
+          setLoading(false);
+          return; // Abort flow
+        }
+
+        // Non-production fallback to local dev API, then localStorage demo
+        console.log('⚠️ Shared API not available, trying main API (development only)');
         try {
           const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}/orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(orderData)
           });
-
           if (response.ok) {
             const createdOrder = await response.json();
             orderId = createdOrder.id;
             console.log('✅ Order created via main API:', orderId);
+          } else {
+            throw new Error('Main API failed');
           }
         } catch (apiError) {
-          console.log('⚠️ Main API not available, using localStorage fallback');
-          
-          // Store order in localStorage for demo
+          console.log('⚠️ Main API not available, using localStorage fallback (development only)');
           const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
           const newOrder = { ...orderData, id: orderId, created_at: new Date().toISOString() };
           demoOrders.push(newOrder);
           localStorage.setItem('demoOrders', JSON.stringify(demoOrders));
-
-          // ALSO store in a shared key that admin can access
           const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
           sharedOrders.push(newOrder);
           localStorage.setItem('rslaf_shared_orders', JSON.stringify(sharedOrders));
-          
-          console.log('💾 Order saved to localStorage:', orderId);
+          console.log('💾 Order saved to localStorage (dev):', orderId);
         }
       }
 

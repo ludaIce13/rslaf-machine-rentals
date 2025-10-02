@@ -224,7 +224,61 @@ const Payment = () => {
         if (sharedApiResponse.ok) {
           console.log('✅ Order updated via API');
         } else {
-          throw new Error('Shared API failed, trying main API');
+          // If the order doesn't exist (404), create it now (hourly-flow safety net)
+          if (sharedApiResponse.status === 404) {
+            console.warn('⚠️ Order not found during update. Creating order now before retry...');
+            const createUrl = 'https://rslaf-backend.onrender.com/orders/public/create-simple';
+            const nowIso = new Date().toISOString();
+            const startIso = bookingData.rentalType === 'dateRange' ? (bookingData.startDate ? `${bookingData.startDate}T${bookingData.startTime || '00:00'}:00` : nowIso) : nowIso;
+            const endIso = bookingData.rentalType === 'dateRange'
+              ? (bookingData.endDate ? `${bookingData.endDate}T${bookingData.endTime || '00:00'}:00` : nowIso)
+              : new Date(Date.now() + (parseFloat(bookingData.totalHours || 1) * 60 * 60 * 1000)).toISOString();
+
+            const createPayload = {
+              name: bookingData.customerInfo?.name,
+              email: bookingData.customerInfo?.email,
+              phone: bookingData.customerInfo?.phone,
+              equipment_name: bookingData.product?.name,
+              total_price: bookingData.totalPrice,
+              payment_method: bookingData.paymentMethod,
+              start_date: startIso,
+              end_date: endIso,
+              total_hours: bookingData.rentalType === 'dateRange' ? (bookingData.totalHours || bookingData.calculatedHours) : parseFloat(bookingData.totalHours || 1)
+            };
+
+            const createRes = await fetch(createUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(createPayload)
+            });
+
+            if (!createRes.ok) {
+              const txt = await createRes.text();
+              throw new Error(`Failed to create order before update. ${createRes.status}: ${txt}`);
+            }
+            const created = await createRes.json();
+            console.log('✅ Created order on-the-fly:', created);
+            bookingData.orderId = created.id;
+
+            // Retry update with the new order id
+            const retryUrl = `https://rslaf-backend.onrender.com/orders/public/update/${bookingData.orderId}`;
+            const retryRes = await fetch(retryUrl, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                payment_details: paymentDetails,
+                delivery_method: bookingData.deliveryMethod || 'pickup',
+                updated_at: new Date().toISOString()
+              })
+            });
+            if (!retryRes.ok) {
+              const t = await retryRes.text();
+              throw new Error(`Retry update failed: ${retryRes.status} ${t}`);
+            }
+            console.log('✅ Order updated after creating on-the-fly');
+          } else {
+            throw new Error('Shared API failed, trying main API');
+          }
         }
       } catch (sharedApiError) {
         console.log('⚠️ Shared API not available, trying main API');
@@ -241,7 +295,59 @@ const Payment = () => {
           });
 
           if (!response.ok) {
-            throw new Error('API update failed');
+            // If still not found on public update endpoint, try the same create-on-the-fly fallback
+            if (response.status === 404) {
+              console.warn('⚠️ Main API update returned 404. Creating order now and retrying...');
+              const createUrl = 'https://rslaf-backend.onrender.com/orders/public/create-simple';
+              const nowIso = new Date().toISOString();
+              const startIso = bookingData.rentalType === 'dateRange' ? (bookingData.startDate ? `${bookingData.startDate}T${bookingData.startTime || '00:00'}:00` : nowIso) : nowIso;
+              const endIso = bookingData.rentalType === 'dateRange'
+                ? (bookingData.endDate ? `${bookingData.endDate}T${bookingData.endTime || '00:00'}:00` : nowIso)
+                : new Date(Date.now() + (parseFloat(bookingData.totalHours || 1) * 60 * 60 * 1000)).toISOString();
+
+              const createPayload = {
+                name: bookingData.customerInfo?.name,
+                email: bookingData.customerInfo?.email,
+                phone: bookingData.customerInfo?.phone,
+                equipment_name: bookingData.product?.name,
+                total_price: bookingData.totalPrice,
+                payment_method: bookingData.paymentMethod,
+                start_date: startIso,
+                end_date: endIso,
+                total_hours: bookingData.rentalType === 'dateRange' ? (bookingData.totalHours || bookingData.calculatedHours) : parseFloat(bookingData.totalHours || 1)
+              };
+
+              const createRes = await fetch(createUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(createPayload)
+              });
+              if (!createRes.ok) {
+                const txt = await createRes.text();
+                throw new Error(`Failed to create order before update (main API path). ${createRes.status}: ${txt}`);
+              }
+              const created = await createRes.json();
+              console.log('✅ Created order (main path) on-the-fly:', created);
+              bookingData.orderId = created.id;
+
+              const retryUrl = `https://rslaf-backend.onrender.com/orders/public/update/${bookingData.orderId}`;
+              const retryRes = await fetch(retryUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  payment_details: paymentDetails,
+                  delivery_method: bookingData.deliveryMethod || 'pickup',
+                  updated_at: new Date().toISOString()
+                })
+              });
+              if (!retryRes.ok) {
+                const t = await retryRes.text();
+                throw new Error(`Retry update (main path) failed: ${retryRes.status} ${t}`);
+              }
+              console.log('✅ Order updated after creating (main path) on-the-fly');
+            } else {
+              throw new Error('API update failed');
+            }
           }
           
           console.log('✅ Order updated via main API (public)');

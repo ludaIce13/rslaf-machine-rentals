@@ -351,6 +351,12 @@ const Orders = () => {
     const matchesDate = !dateFilter || (order.start_date && new Date(order.start_date).toDateString() === new Date(dateFilter).toDateString());
     return matchesSearch && matchesStatus && matchesDate;
   });
+  
+  console.log('🔍 Total orders:', orders.length);
+  console.log('🔍 Filtered orders:', filteredOrders.length);
+  console.log('🔍 Search term:', searchTerm);
+  console.log('🔍 Status filter:', statusFilter);
+  console.log('🔍 Date filter:', dateFilter);
 
   if (loading) {
     return (

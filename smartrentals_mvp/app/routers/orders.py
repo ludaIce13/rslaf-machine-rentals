@@ -71,7 +71,6 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
     """Public endpoint to list all orders (NO AUTH) with display metadata merged in."""
     try:
         orders = db.query(models.Order).all()
-        # Build a merged list preserving extra fields for the admin UI
         results = []
         for o in orders:
             try:
@@ -85,39 +84,25 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
                     "total": float(o.total) if o.total else 0.0,
                 }
                 if meta:
-                    try:
-                        row.update({
-                            "customer_info": {
-                                "name": str(getattr(meta, 'customer_name', '') or ''),
-                                "email": str(getattr(meta, 'customer_email', '') or ''),
-                                "phone": str(getattr(meta, 'customer_phone', '') or ''),
-                            },
-                            "equipment_name": str(getattr(meta, 'equipment_name', '') or ''),
-                            "payment_method": str(getattr(meta, 'payment_method', '') or ''),
-                            "total_price": float(getattr(meta, 'total_price', 0.0) or 0.0),
-                            "total_hours": float(getattr(meta, 'total_hours', 0.0) or 0.0),
-                            "start_date": getattr(meta, 'start_date', None).isoformat() if getattr(meta, 'start_date', None) else None,
-                            "end_date": getattr(meta, 'end_date', None).isoformat() if getattr(meta, 'end_date', None) else None,
-                            # Rental tracking (gracefully handle if columns don't exist yet)
-                            "delivery_method": str(getattr(meta, 'delivery_method', 'pickup') or 'pickup'),
-                            "delivery_pickup_time": getattr(meta, 'delivery_pickup_time', None).isoformat() if getattr(meta, 'delivery_pickup_time', None) else None,
-                            "expected_return_time": getattr(meta, 'expected_return_time', None).isoformat() if getattr(meta, 'expected_return_time', None) else None,
-                            "actual_return_time": getattr(meta, 'actual_return_time', None).isoformat() if getattr(meta, 'actual_return_time', None) else None,
-                            "is_late_delivery": bool(getattr(meta, 'is_late_delivery', False)),
-                            "is_late_return": bool(getattr(meta, 'is_late_return', False)),
-                            "extra_billing_hours": float(getattr(meta, 'extra_billing_hours', 0.0) or 0.0),
-                        })
-                    except Exception as e:
-                        # If meta fields fail, skip them but keep the order
-                        print(f"Warning: Failed to serialize meta for order {o.id}: {e}")
+                    row.update({
+                        "customer_info": {
+                            "name": meta.customer_name or '',
+                            "email": meta.customer_email or '',
+                            "phone": meta.customer_phone or '',
+                        },
+                        "equipment_name": meta.equipment_name or '',
+                        "payment_method": meta.payment_method or '',
+                        "total_price": float(meta.total_price or 0.0),
+                        "total_hours": float(meta.total_hours or 0.0),
+                        "start_date": meta.start_date.isoformat() if meta.start_date else None,
+                        "end_date": meta.end_date.isoformat() if meta.end_date else None,
+                    })
                 results.append(row)
             except Exception as e:
-                # Log but continue with other orders
                 print(f"Warning: Failed to process order {o.id}: {e}")
                 continue
         return results
     except Exception as e:
-        # Return empty list instead of 500 error
         print(f"Error fetching orders: {e}")
         return []
 
@@ -208,12 +193,9 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
 @router.put("/public/update/{order_id}")
 async def public_update_order(order_id: int, payload: dict, db: Session = Depends(get_db)):
     """
-    Update order status and optionally record a payment, without auth (demo only).
-    Accepts keys: status, payment_status, delivery_status, payment_details {paymentMethod, amount, transactionId}
-    Also handles rental tracking: delivery_method, delivery_pickup_time, expected_return_time
+    Update order status and optionally record a payment (Boss Feature #1: Auto-status on payment).
+    Accepts keys: status, payment_details {paymentMethod, amount, transactionId}
     """
-    from datetime import datetime, timedelta
-    
     order = db.query(models.Order).get(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -225,7 +207,7 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
     if status:
         order.status = status
 
-    # Record payment if provided
+    # Boss Feature #1: Auto-update status when payment completes
     details = payload.get("payment_details") or {}
     method = details.get("paymentMethod") or payload.get("payment_method")
     amount = details.get("amount") or payload.get("amount")
@@ -239,76 +221,22 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
         payment = models.Payment(order_id=order.id, method=str(method), amount=amt, reference=str(reference))
         db.add(payment)
 
-        # Auto-update status to "Paid / Awaiting Delivery" or "Paid / Awaiting Pickup"
-        delivery_method = getattr(meta, 'delivery_method', 'pickup') if meta else 'pickup'
+        # Auto-update to "paid_awaiting_delivery" or "paid_awaiting_pickup"
+        delivery_method = payload.get("delivery_method", "pickup")
         if delivery_method == "delivery":
             order.status = "paid_awaiting_delivery"
         else:
             order.status = "paid_awaiting_pickup"
 
-        # Update public metadata with latest totals/method
+        # Update metadata
         if meta:
-            if method:
-                meta.payment_method = str(method)
-            if amount is not None:
-                meta.total_price = amt or meta.total_price
-
-    # Handle delivery/pickup tracking (safely check if attributes exist)
-    if payload.get("delivery_method") and meta:
-        try:
-            meta.delivery_method = payload.get("delivery_method")
-        except AttributeError:
-            pass  # Column doesn't exist yet
-    
-    if payload.get("mark_delivered_or_picked_up") and meta:
-        try:
-            # Mark as delivered/picked up - rental time starts NOW
-            meta.delivery_pickup_time = datetime.utcnow()
-            
-            # Calculate expected return time based on rental hours
-            if getattr(meta, 'total_hours', 0) and meta.total_hours > 0:
-                meta.expected_return_time = datetime.utcnow() + timedelta(hours=meta.total_hours)
-            elif getattr(meta, 'start_date', None) and getattr(meta, 'end_date', None):
-                meta.expected_return_time = meta.end_date
-            
-            # Update order status
-            order.status = "rented"
-            
-            # Check if delivery was late
-            if getattr(meta, 'expected_delivery_time', None) and datetime.utcnow() > meta.expected_delivery_time:
-                meta.is_late_delivery = True
-        except AttributeError:
-            pass  # Columns don't exist yet
-    
-    # Handle return tracking
-    if payload.get("mark_returned") and meta:
-        try:
-            meta.actual_return_time = datetime.utcnow()
-            order.status = "returned"
-            
-            # Calculate extra billing if return is late
-            expected = getattr(meta, 'expected_return_time', None)
-            actual = getattr(meta, 'actual_return_time', None)
-            if expected and actual and actual > expected:
-                meta.is_late_return = True
-                late_delta = actual - expected
-                meta.extra_billing_hours = late_delta.total_seconds() / 3600.0
-        except AttributeError:
-            pass  # Columns don't exist yet
-    
-    # Set expected delivery time if provided
-    if payload.get("expected_delivery_time") and meta:
-        try:
-            from datetime import datetime as _dt
-            edt = payload.get("expected_delivery_time")
-            meta.expected_delivery_time = _dt.fromisoformat(edt) if isinstance(edt, str) else edt
-        except (AttributeError, Exception):
-            pass  # Column doesn't exist yet or invalid format
+            meta.payment_method = str(method)
+            meta.total_price = amt or meta.total_price
 
     db.commit()
     db.refresh(order)
 
-    return {"ok": True, "order_id": order.id}
+    return {"ok": True, "order_id": order.id, "status": order.status}
 
 
 @router.delete("/public/{order_id}")

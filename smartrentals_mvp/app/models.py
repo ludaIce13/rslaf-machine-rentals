@@ -101,15 +101,16 @@ class PublicOrderMeta(Base):
     total_hours: Mapped[float] = mapped_column(Float, default=0.0)
     start_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
     end_date: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    # Rental tracking fields
-    delivery_pickup_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    actual_return_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    expected_delivery_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    expected_return_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    is_late_delivery: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_late_return: Mapped[bool] = mapped_column(Boolean, default=False)
-    extra_billing_hours: Mapped[float] = mapped_column(Float, default=0.0)
-    delivery_method: Mapped[str] = mapped_column(String, default="pickup")  # 'pickup' or 'delivery'
+    # Rental tracking fields (optional - will be added via migration)
+    # These are calculated on-the-fly if columns don't exist yet
+    # delivery_pickup_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    # actual_return_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    # expected_delivery_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    # expected_return_time: Mapped[datetime] = mapped_column(DateTime, nullable=True)
+    # is_late_delivery: Mapped[bool] = mapped_column(Boolean, default=False)
+    # is_late_return: Mapped[bool] = mapped_column(Boolean, default=False)
+    # extra_billing_hours: Mapped[float] = mapped_column(Float, default=0.0)
+    # delivery_method: Mapped[str] = mapped_column(String, default="pickup")  # 'pickup' or 'delivery'
 
 
 class Reservation(Base):

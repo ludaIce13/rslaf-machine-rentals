@@ -212,6 +212,23 @@ const Booking = () => {
           return new Date(`${date}T${time || '00:00'}:00`).toISOString();
         };
 
+        // Calculate dates properly for both rental types
+        let startDateISO, endDateISO, hoursValue;
+        
+        if (rentalType === 'dateRange') {
+          // Date range mode: use user-selected dates
+          startDateISO = formatDateTime(startDate, startTime);
+          endDateISO = formatDateTime(endDate, endTime);
+          hoursValue = calculatedHours;
+        } else {
+          // Hours mode: start now, end = start + hours
+          const now = new Date();
+          startDateISO = now.toISOString();
+          hoursValue = parseFloat(totalHours) || 1;
+          const endTime = new Date(now.getTime() + (hoursValue * 60 * 60 * 1000));
+          endDateISO = endTime.toISOString();
+        }
+
         const publicPayload = {
           name: customerInfo.name,
           email: customerInfo.email,
@@ -219,9 +236,9 @@ const Booking = () => {
           total_price: totalPrice,
           payment_method: paymentMethod,
           equipment_name: product.name,
-          start_date: rentalType === 'dateRange' ? formatDateTime(startDate, startTime) : new Date().toISOString(),
-          end_date: rentalType === 'dateRange' ? formatDateTime(endDate, endTime) : (calculatedEndDate ? new Date(calculatedEndDate).toISOString() : null),
-          total_hours: rentalType === 'dateRange' ? calculatedHours : parseFloat(totalHours)
+          start_date: startDateISO,
+          end_date: endDateISO,
+          total_hours: hoursValue
         };
 
         console.log('[BOOKING] Attempting to create order with payload:', publicPayload);

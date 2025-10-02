@@ -121,6 +121,8 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
     - start_date (str/datetime), end_date (str/datetime), total_hours (float)
     """
     try:
+        print(f"[ORDER CREATE] Received payload: {payload}")
+        
         # Find or create a customer by phone/email/name
         name = payload.get("name") or payload.get("customer_name") or "Walk-in Customer"
         phone = payload.get("phone") or "unknown"
@@ -134,8 +136,8 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
         if not customer:
             customer = models.Customer(name=name, email=email, phone=phone)
             db.add(customer)
-            db.commit()
-            db.refresh(customer)
+            db.flush()  # Get customer ID without committing
+            print(f"[ORDER CREATE] Created customer #{customer.id}")
 
         # Create a very simple order
         order = models.Order(customer_id=customer.id)
@@ -148,44 +150,47 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
         order.total = total
 
         db.add(order)
-        db.commit()
-        db.refresh(order)
+        db.flush()  # Get order ID
+        print(f"[ORDER CREATE] Created order #{order.id}")
 
         # Store demo/public metadata for admin display
-        try:
-            meta = models.PublicOrderMeta(
-                order_id=order.id,
-                customer_name=name,
-                customer_email=email,
-                customer_phone=phone,
-                equipment_name=str(payload.get("equipment_name") or ""),
-                payment_method=str(payload.get("payment_method") or ""),
-                total_price=total,
-                total_hours=float(payload.get("total_hours") or 0.0),
-            )
-            # Attempt to parse dates if provided (ISO strings recommended)
+        meta = models.PublicOrderMeta(
+            order_id=order.id,
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+            equipment_name=str(payload.get("equipment_name") or ""),
+            payment_method=str(payload.get("payment_method") or ""),
+            total_price=total,
+            total_hours=float(payload.get("total_hours") or 0.0),
+        )
+        
+        # Parse dates carefully
+        from datetime import datetime as _dt
+        sd = payload.get("start_date")
+        ed = payload.get("end_date")
+        if sd:
             try:
-                from datetime import datetime as _dt
-                sd = payload.get("start_date")
-                ed = payload.get("end_date")
-                if sd:
-                    meta.start_date = _dt.fromisoformat(sd.replace('Z', '+00:00'))
-                if ed:
-                    meta.end_date = _dt.fromisoformat(ed.replace('Z', '+00:00'))
-            except Exception as e:
-                print(f"Warning: Could not parse dates: {e}")
+                meta.start_date = _dt.fromisoformat(sd.replace('Z', '+00:00'))
+            except:
+                pass
+        if ed:
+            try:
+                meta.end_date = _dt.fromisoformat(ed.replace('Z', '+00:00'))
+            except:
                 pass
 
-            db.add(meta)
-            db.commit()
-        except Exception as meta_error:
-            print(f"Warning: Could not create PublicOrderMeta: {meta_error}")
-            # Continue anyway - order was created
-            pass
+        db.add(meta)
+        
+        # COMMIT EVERYTHING AT ONCE
+        db.commit()
+        print(f"[ORDER CREATE] ✅ Successfully committed order #{order.id} to database")
 
-        return {"id": order.id}
+        return {"id": order.id, "status": "created"}
     except Exception as e:
-        print(f"Error creating order: {e}")
+        print(f"[ORDER CREATE] ❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
 

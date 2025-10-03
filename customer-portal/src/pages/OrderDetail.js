@@ -33,6 +33,20 @@ const OrderDetail = () => {
       }
     };
     load();
+
+    // Poll public info every 60s to update overdue banner live
+    const interval = setInterval(async () => {
+      try {
+        const pubRes = await fetch('https://rslaf-backend.onrender.com/orders/public/all');
+        if (pubRes.ok) {
+          const pub = await pubRes.json();
+          const match = Array.isArray(pub) ? pub.find((o) => o.id === Number(id)) : null;
+          if (match) setPublicInfo(match);
+        }
+      } catch {}
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, [id]);
 
   if (loading) {

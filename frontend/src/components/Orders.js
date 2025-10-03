@@ -23,6 +23,39 @@ const Orders = () => {
       }
     };
 
+  // New admin actions
+  const markDelivered = async (order) => {
+    const isProduction = window.location.hostname.includes('onrender.com');
+    const url = isProduction
+      ? `https://rslaf-backend.onrender.com/orders/public/mark-delivered/${order.id}`
+      : `http://localhost:3001/api/orders/${order.id}/mark-delivered`;
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      if (!res.ok) throw new Error(`Failed with ${res.status}`);
+      console.log('✅ Marked delivered:', await res.json());
+      fetchOrders();
+    } catch (e) {
+      console.error('❌ markDelivered error:', e);
+      alert('Failed to mark delivered. Please try again.');
+    }
+  };
+
+  const markReturned = async (order) => {
+    const isProduction = window.location.hostname.includes('onrender.com');
+    const url = isProduction
+      ? `https://rslaf-backend.onrender.com/orders/public/mark-returned/${order.id}`
+      : `http://localhost:3001/api/orders/${order.id}/mark-returned`;
+    try {
+      const res = await fetch(url, { method: 'POST' });
+      if (!res.ok) throw new Error(`Failed with ${res.status}`);
+      console.log('✅ Marked returned:', await res.json());
+      fetchOrders();
+    } catch (e) {
+      console.error('❌ markReturned error:', e);
+      alert('Failed to mark returned. Please try again.');
+    }
+  };
+
     // Listen for custom events from customer portal
     const handleOrderUpdate = () => {
       console.log('🔔 Custom order update event received, refreshing...');
@@ -506,6 +539,11 @@ const Orders = () => {
                         <span className="text-sm text-gray-500">
                           {order.total_hours ? `${order.total_hours} hours` : 'Duration not set'}
                         </span>
+                        {order.expected_return_time && (
+                          <span className="text-xs text-gray-400 mt-1">
+                            Expected Return: {new Date(order.expected_return_time).toLocaleString()}
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -519,7 +557,7 @@ const Orders = () => {
                         )}
                         {order.is_late_return && (
                           <span className="px-2 py-1 rounded text-xs font-medium bg-orange-50 text-orange-700 border border-orange-200">
-                            ⏰ Late Return ({order.extra_billing_hours?.toFixed(1)}h extra)
+                            ⏰ Late Return ({order.extra_billing_hours?.toFixed(1)}h, +{formatCurrency(getDisplayAmount(order.extra_billing_amount || 0, true))})
                           </span>
                         )}
                       </div>
@@ -574,6 +612,26 @@ const Orders = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                           </svg>
                         </button>
+                        {/* Mark Delivered / Picked Up */}
+                        {(order.status === 'paid_awaiting_delivery' || order.status === 'paid_awaiting_pickup') && (
+                          <button
+                            onClick={() => markDelivered(order)}
+                            className="px-2 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700"
+                            title="Mark Delivered / Picked Up"
+                          >
+                            Mark Delivered
+                          </button>
+                        )}
+                        {/* Mark Returned */}
+                        {order.status === 'rented' && (
+                          <button
+                            onClick={() => markReturned(order)}
+                            className="px-2 py-1 text-xs rounded bg-gray-700 text-white hover:bg-gray-800"
+                            title="Mark Returned"
+                          >
+                            Mark Returned
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleEditOrder(order)}
                           className="p-1 text-green-400 hover:text-green-600"

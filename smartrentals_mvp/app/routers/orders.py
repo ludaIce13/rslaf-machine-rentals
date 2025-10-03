@@ -70,6 +70,7 @@ async def list_all_orders(
 async def list_all_orders_public(db: Session = Depends(get_db)):
     """Public endpoint to list all orders (NO AUTH) with display metadata merged in."""
     try:
+        from datetime import datetime, timedelta
         orders = db.query(models.Order).all()
         results = []
         for o in orders:
@@ -84,6 +85,33 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
                     "total": float(o.total) if o.total else 0.0,
                 }
                 if meta:
+                    # Derive expected_return_time and rates without schema changes
+                    total_hours = float(meta.total_hours or 0.0)
+                    total_price = float(meta.total_price or 0.0)
+                    hourly_rate = (total_price / total_hours) if (total_hours or 0) else 0.0
+                    start_dt = meta.start_date
+                    end_dt = meta.end_date
+                    expected_return_time = end_dt
+
+                    # Compute lateness flags
+                    now = datetime.utcnow()
+                    is_late_delivery = False
+                    is_late_return = False
+                    extra_billing_hours = 0.0
+                    extra_billing_amount = 0.0
+
+                    # Late delivery: if waiting for delivery and now past planned start
+                    if (o.status in ["paid_awaiting_delivery"]) and start_dt and now > start_dt:
+                        is_late_delivery = True
+
+                    # Active rental (picked up or delivered)
+                    if o.status in ["rented"] and expected_return_time:
+                        if now > expected_return_time:
+                            is_late_return = True
+                            delta = now - expected_return_time
+                            extra_billing_hours = round(delta.total_seconds() / 3600.0, 2)
+                            extra_billing_amount = round(extra_billing_hours * hourly_rate, 2)
+
                     row.update({
                         "customer_info": {
                             "name": meta.customer_name or '',
@@ -92,10 +120,16 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
                         },
                         "equipment_name": meta.equipment_name or '',
                         "payment_method": meta.payment_method or '',
-                        "total_price": float(meta.total_price or 0.0),
-                        "total_hours": float(meta.total_hours or 0.0),
-                        "start_date": meta.start_date.isoformat() if meta.start_date else None,
-                        "end_date": meta.end_date.isoformat() if meta.end_date else None,
+                        "total_price": total_price,
+                        "total_hours": total_hours,
+                        "start_date": start_dt.isoformat() if start_dt else None,
+                        "end_date": end_dt.isoformat() if end_dt else None,
+                        "expected_return_time": expected_return_time.isoformat() if expected_return_time else None,
+                        "hourly_rate": hourly_rate,
+                        "is_late_delivery": is_late_delivery,
+                        "is_late_return": is_late_return,
+                        "extra_billing_hours": extra_billing_hours,
+                        "extra_billing_amount": extra_billing_amount,
                     })
                 results.append(row)
             except Exception as e:
@@ -150,43 +184,49 @@ async def public_create_simple_order(payload: dict, db: Session = Depends(get_db
         order.total = total
 
         db.add(order)
-        db.flush()  # Get order ID
-        print(f"[ORDER CREATE] Created order #{order.id}")
+        db.flush()  # Get order ID as early as possible
+        created_order_id = order.id
+        print(f"[ORDER CREATE] Created order #{created_order_id}")
 
-        # Store demo/public metadata for admin display
-        meta = models.PublicOrderMeta(
-            order_id=order.id,
-            customer_name=name,
-            customer_email=email,
-            customer_phone=phone,
-            equipment_name=str(payload.get("equipment_name") or ""),
-            payment_method=str(payload.get("payment_method") or ""),
-            total_price=total,
-            total_hours=float(payload.get("total_hours") or 0.0),
-        )
-        
-        # Parse dates carefully
-        from datetime import datetime as _dt
-        sd = payload.get("start_date")
-        ed = payload.get("end_date")
-        if sd:
-            try:
-                meta.start_date = _dt.fromisoformat(sd.replace('Z', '+00:00'))
-            except:
-                pass
-        if ed:
-            try:
-                meta.end_date = _dt.fromisoformat(ed.replace('Z', '+00:00'))
-            except:
-                pass
-
-        db.add(meta)
-        
-        # COMMIT EVERYTHING AT ONCE
+        # Commit the ORDER first so it always persists
         db.commit()
-        print(f"[ORDER CREATE] ✅ Successfully committed order #{order.id} to database")
+        print(f"[ORDER CREATE] ✅ Order #{created_order_id} committed")
 
-        return {"id": order.id, "status": "created"}
+        # Best-effort: create PublicOrderMeta in a separate transaction
+        try:
+            meta = models.PublicOrderMeta(
+                order_id=created_order_id,
+                customer_name=name,
+                customer_email=email,
+                customer_phone=phone,
+                equipment_name=str(payload.get("equipment_name") or ""),
+                payment_method=str(payload.get("payment_method") or ""),
+                total_price=total,
+                total_hours=float(payload.get("total_hours") or 0.0),
+            )
+            from datetime import datetime as _dt
+            sd = payload.get("start_date")
+            ed = payload.get("end_date")
+            if sd:
+                try:
+                    meta.start_date = _dt.fromisoformat(sd.replace('Z', '+00:00'))
+                except Exception:
+                    pass
+            if ed:
+                try:
+                    meta.end_date = _dt.fromisoformat(ed.replace('Z', '+00:00'))
+                except Exception:
+                    pass
+
+            db.add(meta)
+            db.commit()
+            print(f"[ORDER CREATE] ✅ PublicOrderMeta for order #{created_order_id} committed")
+        except Exception as meta_err:
+            # Log and continue; do not fail order creation
+            print(f"[ORDER CREATE] ⚠️  Failed to create PublicOrderMeta for order #{created_order_id}: {meta_err}")
+            db.rollback()
+
+        return {"id": created_order_id, "status": "created"}
     except Exception as e:
         print(f"[ORDER CREATE] ❌ ERROR: {e}")
         import traceback
@@ -274,6 +314,67 @@ async def public_delete_all_orders(db: Session = Depends(get_db)):
     db.query(models.Order).delete()
     db.commit()
     return {"ok": True}
+
+
+# ---------------------------
+# Delivery/Pickup and Return public endpoints (no auth)
+# ---------------------------
+
+@router.post("/public/mark-delivered/{order_id}")
+async def public_mark_delivered(order_id: int, db: Session = Depends(get_db)):
+    """Mark an order as delivered/picked up. Starts rental timer immediately.
+    - Sets order.status = 'rented'
+    - If meta.start_date is empty, sets it to now
+    - If meta.total_hours set and meta.end_date empty, sets end = start + hours
+    """
+    from datetime import datetime, timedelta
+    order = db.query(models.Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == order.id).first()
+    now = datetime.utcnow()
+    if meta:
+        if not meta.start_date:
+            meta.start_date = now
+        if not meta.end_date and (meta.total_hours or 0) and meta.start_date:
+            meta.end_date = meta.start_date + timedelta(hours=float(meta.total_hours or 0.0))
+
+    order.status = "rented"
+    db.commit()
+    return {"ok": True, "order_id": order.id, "status": order.status,
+            "start_date": meta.start_date.isoformat() if meta and meta.start_date else None,
+            "end_date": meta.end_date.isoformat() if meta and meta.end_date else None}
+
+
+@router.post("/public/mark-returned/{order_id}")
+async def public_mark_returned(order_id: int, db: Session = Depends(get_db)):
+    """Mark an order as returned. If overdue, add an extra billing payment and bump totals.
+    Uses hourly_rate = total_price / total_hours as surrogate.
+    """
+    from datetime import datetime
+    order = db.query(models.Order).get(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    meta = db.query(models.PublicOrderMeta).filter(models.PublicOrderMeta.order_id == order.id).first()
+    if meta and meta.end_date:
+        total_hours = float(meta.total_hours or 0.0)
+        total_price = float(meta.total_price or 0.0)
+        hourly_rate = (total_price / total_hours) if (total_hours or 0) else 0.0
+
+        now = datetime.utcnow()
+        if now > meta.end_date and hourly_rate > 0:
+            extra_hours = (now - meta.end_date).total_seconds() / 3600.0
+            extra_amount = round(extra_hours * hourly_rate, 2)
+            # Record a payment and bump totals
+            payment = models.Payment(order_id=order.id, method="extra_billing", amount=extra_amount, reference=f"late-{order.id}")
+            db.add(payment)
+            order.total = float(order.total or 0.0) + extra_amount
+
+    order.status = "returned"
+    db.commit()
+    return {"ok": True, "order_id": order.id, "status": order.status}
 
 
 @router.get("/public/check-late-returns")

@@ -139,11 +139,11 @@ const Customers = () => {
   }
 
   return (
-    <div>
+    <div className="pb-6">
       {/* Content */}
-      <div className="flex">
+      <div className="flex gap-8">
         {/* Customer List */}
-        <div className="w-1/2 pr-6">
+        <div className="w-1/2 pr-8">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl font-semibold text-gray-900">Customers</h1>
             <button 
@@ -176,8 +176,8 @@ const Customers = () => {
 
           {/* Customer List */}
           <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-            <div className="p-4 border-b border-gray-200">
-              <div className="grid grid-cols-4 gap-4 text-xs font-medium text-gray-500 uppercase">
+            <div className="px-5 py-4 border-b border-gray-200">
+              <div className="grid grid-cols-4 gap-6 text-xs font-medium text-gray-500 uppercase tracking-wide">
                 <span>Name</span>
                 <span>Contact</span>
                 <span>Last Rental</span>
@@ -188,22 +188,27 @@ const Customers = () => {
               {filteredCustomers.map((customer) => (
                 <div
                   key={customer.id}
-                  className={`p-4 cursor-pointer hover:bg-gray-50 ${selectedCustomer?.id === customer.id ? 'bg-gray-50' : ''}`}
+                  className={`px-5 py-5 md:py-6 cursor-pointer hover:bg-gray-50 ${selectedCustomer?.id === customer.id ? 'bg-gray-50' : ''}`}
                   onClick={() => setSelectedCustomer(customer)}
                 >
-                  <div className="grid grid-cols-4 gap-4 items-center">
-                    <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-4 gap-6 items-center">
+                    <div className="flex items-center gap-4">
                       <img
                         src={customer.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'}
                         alt={customer.name}
-                        className="w-8 h-8 rounded-full"
+                        className="w-10 h-10 rounded-full"
                       />
-                      <div>
-                        <div className="text-gray-900 font-medium">{customer.name}</div>
-                        <div className="text-gray-500 text-sm">{customer.email}</div>
+                      <div className="leading-5">
+                        <div className="text-gray-900 font-medium text-base">{customer.name}</div>
+                        <div className="text-gray-500 text-sm truncate max-w-[200px]">{customer.email}</div>
                       </div>
                     </div>
-                    <div className="text-gray-700 text-sm">{customer.phone}</div>
+                    <div className="text-gray-700 text-sm">
+                      <div className="font-medium text-gray-900">{customer.phone}</div>
+                      {customer.address && (
+                        <div className="text-gray-500 text-xs truncate max-w-[220px]">{customer.address}</div>
+                      )}
+                    </div>
                     <div className="text-gray-700 text-sm">{customer.lastRental}</div>
                     <div className="flex justify-end">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -218,12 +223,12 @@ const Customers = () => {
         </div>
 
         {/* Customer Details Sidebar */}
-        <div className="w-1/2 pl-6 border-l border-gray-200">
+        <div className="w-1/2 pl-8 border-l border-gray-200">
           {selectedCustomer ? (
             <div>
               {/* Customer Profile */}
               <div className="bg-white rounded-lg p-6 mb-6 border border-gray-200 shadow-sm">
-                <div className="flex items-center gap-4 mb-4">
+                <div className="flex items-center gap-5 mb-5">
                   <img
                     src={selectedCustomer.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face'}
                     alt={selectedCustomer.name}
@@ -231,7 +236,7 @@ const Customers = () => {
                   />
                   <div className="flex-1">
                     <h2 className="text-xl font-semibold text-gray-900">{selectedCustomer.name}</h2>
-                    <p className="text-gray-500">Customer since {selectedCustomer.customerSince}</p>
+                    <p className="text-gray-500 mt-0.5">Customer since {selectedCustomer.customerSince}</p>
                   </div>
                   <div className="flex gap-2">
                     <button className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200">
@@ -273,7 +278,7 @@ const Customers = () => {
                     {selectedCustomer.address && (
                       <div className="flex items-center gap-3">
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 111.314 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                         </svg>
                         <span className="text-gray-900">{selectedCustomer.address}</span>

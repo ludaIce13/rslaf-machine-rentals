@@ -31,12 +31,31 @@ const Orders = () => {
       : `http://localhost:3001/api/orders/${order.id}/mark-delivered`;
     try {
       const res = await fetch(url, { method: 'POST' });
-      if (!res.ok) throw new Error(`Failed with ${res.status}`);
-      console.log('✅ Marked delivered:', await res.json());
+      if (!res.ok) {
+        const txt = await res.text();
+        console.warn('⚠️ mark-delivered endpoint failed:', res.status, txt);
+        // Fallback: try public update to set status to rented
+        const fbUrl = isProduction
+          ? `https://rslaf-backend.onrender.com/orders/public/update/${order.id}`
+          : `http://localhost:3001/api/orders/${order.id}`;
+        const delivery_method = order.status === 'paid_awaiting_delivery' ? 'delivery' : 'pickup';
+        const fb = await fetch(fbUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'rented', delivery_method })
+        });
+        if (!fb.ok) {
+          const t2 = await fb.text();
+          throw new Error(`Fallback update failed ${fb.status}: ${t2}`);
+        }
+        console.log('✅ Fallback: status set to rented via public/update');
+      } else {
+        console.log('✅ Marked delivered:', await res.json());
+      }
       fetchOrders();
     } catch (e) {
       console.error('❌ markDelivered error:', e);
-      alert('Failed to mark delivered. Please try again.');
+      alert(`Failed to mark delivered: ${e.message}`);
     }
   };
 

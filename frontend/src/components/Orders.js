@@ -23,7 +23,30 @@ const Orders = () => {
       }
     };
 
-  // New admin actions
+    // Listen for custom events from customer portal
+    const handleOrderUpdate = () => {
+      console.log('🔔 Custom order update event received, refreshing...');
+      fetchOrders();
+    };
+
+    // Add event listeners
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('orderUpdated', handleOrderUpdate);
+    
+    // REMOVED: Auto-polling that was causing constant refresh
+    // const pollInterval = setInterval(() => {
+    //   console.log('🔄 Polling for order updates...');
+    //   fetchOrders();
+    // }, 5000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('orderUpdated', handleOrderUpdate);
+      // clearInterval(pollInterval); // No longer needed
+    };
+  }, []);
+
+  // Admin actions for rental tracking
   const markDelivered = async (order) => {
     const isProduction = window.location.hostname.includes('onrender.com');
     const url = isProduction
@@ -74,29 +97,6 @@ const Orders = () => {
       alert('Failed to mark returned. Please try again.');
     }
   };
-
-    // Listen for custom events from customer portal
-    const handleOrderUpdate = () => {
-      console.log('🔔 Custom order update event received, refreshing...');
-      fetchOrders();
-    };
-
-    // Add event listeners
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('orderUpdated', handleOrderUpdate);
-    
-    // REMOVED: Auto-polling that was causing constant refresh
-    // const pollInterval = setInterval(() => {
-    //   console.log('🔄 Polling for order updates...');
-    //   fetchOrders();
-    // }, 5000);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('orderUpdated', handleOrderUpdate);
-      // clearInterval(pollInterval); // No longer needed
-    };
-  }, []);
 
   const fetchOrders = async () => {
     setLoading(true);

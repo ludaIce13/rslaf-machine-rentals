@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProduct } from '../services/api';
+import { convertUSDToSLL, formatCurrency } from '../utils/currency';
 import './Booking.css';
 
 const Booking = () => {
@@ -478,9 +479,21 @@ const Booking = () => {
                     <span>Total Hours:</span>
                     <span>{calculatedHours.toFixed(1)} hours</span>
                   </div>
+                  <div className="calc-row">
+                    <span>Hourly Rate:</span>
+                    <span>${product.hourly_rate.toFixed(2)} USD</span>
+                  </div>
                   <div className="calc-row total">
-                    <span>Total Price:</span>
+                    <span>Total Price (USD):</span>
                     <span>${totalPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="calc-row total" style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                    <span>Total Price (SLL):</span>
+                    <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>{formatCurrency(convertUSDToSLL(totalPrice))}</span>
+                  </div>
+                  <div className="calc-row" style={{ fontSize: '0.85rem', color: '#666', fontStyle: 'italic' }}>
+                    <span>Exchange Rate:</span>
+                    <span>$1 USD = Le 24 SLL</span>
                   </div>
                 </div>
               )}
@@ -530,9 +543,21 @@ const Booking = () => {
                     <span>Return Date & Time:</span>
                     <span>{calculatedEndDate}</span>
                   </div>
+                  <div className="calc-row">
+                    <span>Hourly Rate:</span>
+                    <span>${product.hourly_rate.toFixed(2)} USD</span>
+                  </div>
                   <div className="calc-row total">
-                    <span>Total Price:</span>
+                    <span>Total Price (USD):</span>
                     <span>${totalPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="calc-row total" style={{ borderTop: '1px solid #e0e0e0', paddingTop: '0.5rem', marginTop: '0.5rem' }}>
+                    <span>Total Price (SLL):</span>
+                    <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>{formatCurrency(convertUSDToSLL(totalPrice))}</span>
+                  </div>
+                  <div className="calc-row" style={{ fontSize: '0.85rem', color: '#666', fontStyle: 'italic' }}>
+                    <span>Exchange Rate:</span>
+                    <span>$1 USD = Le 24 SLL</span>
                   </div>
                 </div>
               )}
@@ -646,7 +671,7 @@ const Booking = () => {
               Cancel
             </button>
             <button type="submit" disabled={loading || totalPrice === 0} className="submit-btn">
-              {loading ? 'Processing...' : `Proceed to Payment - $${totalPrice.toFixed(2)}`}
+              {loading ? 'Processing...' : `Proceed to Payment - $${totalPrice.toFixed(2)} (${formatCurrency(convertUSDToSLL(totalPrice))})`}
             </button>
           </div>
         </form>

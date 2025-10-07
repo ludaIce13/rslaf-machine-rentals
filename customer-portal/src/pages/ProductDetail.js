@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getProduct, getAvailableItems, createOrder } from '../services/api';
+import { convertUSDToSLL, formatCurrency } from '../utils/currency';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -222,10 +223,23 @@ const ProductDetail = () => {
           <p style={{ color: '#6c757d' }}>{product.description}</p>
           <div style={{ marginTop: '0.5rem', color: '#2c3e50', fontWeight: 600 }}>
             {(product.hourly_rate || 0) > 0 ? (
-              <>${product.hourly_rate}/hour</>
+              <>
+                <div>${product.hourly_rate}/hour (USD)</div>
+                <div style={{ color: '#2e7d32', fontSize: '0.95rem', marginTop: '0.25rem' }}>
+                  {formatCurrency(convertUSDToSLL(product.hourly_rate))}/hour (SLL)
+                </div>
+              </>
             ) : (
-              <>${product.daily_rate}/day</>
+              <>
+                <div>${product.daily_rate}/day (USD)</div>
+                <div style={{ color: '#2e7d32', fontSize: '0.95rem', marginTop: '0.25rem' }}>
+                  {formatCurrency(convertUSDToSLL(product.daily_rate))}/day (SLL)
+                </div>
+              </>
             )}
+            <div style={{ fontSize: '0.75rem', color: '#666', fontStyle: 'italic', marginTop: '0.5rem' }}>
+              Rate: $1 USD = Le 24 SLL
+            </div>
           </div>
         </div>
 
@@ -279,28 +293,42 @@ const ProductDetail = () => {
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Hours</span>
-                      <strong>{derived.hours}</strong>
+                      <strong>{derived.hours.toFixed(2)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                      <span>Rate</span>
-                      <strong>${product.hourly_rate}/hour</strong>
+                      <span>Rate (USD)</span>
+                      <strong>${product.hourly_rate.toFixed(2)}/hour</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                      <span>Rate (SLL)</span>
+                      <strong style={{ color: '#2e7d32' }}>{formatCurrency(convertUSDToSLL(product.hourly_rate))}/hour</strong>
                     </div>
                   </>
                 ) : (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Days</span>
-                      <strong>{Math.max(1, Math.ceil(derived.days))}</strong>
+                      <strong>{derived.days.toFixed(1)}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                      <span>Rate</span>
-                      <strong>${product.daily_rate}/day</strong>
+                      <span>Rate (USD)</span>
+                      <strong>${product.daily_rate.toFixed(2)}/day</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                      <span>Rate (SLL)</span>
+                      <strong style={{ color: '#2e7d32' }}>{formatCurrency(convertUSDToSLL(product.daily_rate))}/day</strong>
                     </div>
                   </>
                 )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-                  <span>Estimated total</span>
-                  <strong>${estimate}</strong>
+                <div style={{ padding: '0.5rem', background: '#e6f7ed', borderRadius: 8, marginTop: 6 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: 700 }}>Estimated Total (USD)</span>
+                    <strong style={{ color: '#1b7a23' }}>${estimate.toFixed(2)}</strong>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, paddingTop: 4, borderTop: '1px solid #c8ecd3' }}>
+                    <span style={{ fontWeight: 700 }}>Estimated Total (SLL)</span>
+                    <strong style={{ color: '#1b7a23' }}>{formatCurrency(convertUSDToSLL(estimate))}</strong>
+                  </div>
                 </div>
               </div>
 

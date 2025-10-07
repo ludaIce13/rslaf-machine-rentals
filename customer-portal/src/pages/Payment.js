@@ -50,15 +50,18 @@ const Payment = () => {
     setProcessing(true);
     
     try {
+      // Convert USD to SLL for Un Punto payment
+      const amountInSLL = convertUSDToSLL(bookingData.totalPrice);
       console.log('🔄 Initiating Un Punto payment...');
-      console.log('📊 Amount:', bookingData.totalPrice);
+      console.log('📊 Amount in USD:', bookingData.totalPrice);
+      console.log('📊 Amount in SLL:', amountInSLL);
       
       const response = await fetch('https://odprta-tocka.onrender.com/api/monime/initiate-payment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: 'RSLAF-Equipment-Rental',
-          amount: parseFloat(bookingData.totalPrice)
+          amount: parseFloat(amountInSLL) // Send in SLL
         })
       });
 
@@ -499,8 +502,16 @@ const Payment = () => {
             <span>{bookingData.startDate}</span>
           </div>
           <div className="summary-item total">
-            <span>Total Amount:</span>
+            <span>Total Amount (USD):</span>
             <span>${bookingData.totalPrice.toFixed(2)}</span>
+          </div>
+          <div className="summary-item total" style={{ backgroundColor: '#e8f5e9', padding: '0.75rem', borderRadius: '8px', marginTop: '0.5rem' }}>
+            <span style={{ fontWeight: 'bold' }}>Total Amount (SLL):</span>
+            <span style={{ color: '#2e7d32', fontWeight: 'bold' }}>{formatCurrency(convertUSDToSLL(bookingData.totalPrice))}</span>
+          </div>
+          <div className="summary-item" style={{ fontSize: '0.85rem', color: '#666', fontStyle: 'italic', marginTop: '0.5rem' }}>
+            <span>Exchange Rate:</span>
+            <span>$1 USD = Le 24 SLL</span>
           </div>
         </div>
 
@@ -583,7 +594,8 @@ const Payment = () => {
                   {paymentFeedback.transactionId && (
                     <p><strong>Transaction ID:</strong> {paymentFeedback.transactionId}</p>
                   )}
-                  <p><strong>Amount:</strong> ${bookingData.totalPrice.toFixed(2)}</p>
+                  <p><strong>Amount (USD):</strong> ${bookingData.totalPrice.toFixed(2)}</p>
+                  <p><strong>Amount (SLL):</strong> {formatCurrency(convertUSDToSLL(bookingData.totalPrice))}</p>
                   <p><strong>Method:</strong> {getPaymentMethodDisplay(bookingData.paymentMethod)}</p>
                 </div>
               )}
@@ -623,8 +635,8 @@ const Payment = () => {
           >
             {processing ? '⏳ Processing Payment...' : 
              (bookingData.paymentMethod === 'orange_money' || bookingData.paymentMethod === 'afri_money') ? 
-             `📱 Pay $${bookingData.totalPrice.toFixed(2)} with ${getPaymentMethodDisplay(bookingData.paymentMethod)}` :
-             `💰 Pay $${bookingData.totalPrice.toFixed(2)}`}
+             `📱 Pay ${formatCurrency(convertUSDToSLL(bookingData.totalPrice))} with ${getPaymentMethodDisplay(bookingData.paymentMethod)}` :
+             `💰 Pay $${bookingData.totalPrice.toFixed(2)} (${formatCurrency(convertUSDToSLL(bookingData.totalPrice))})`}
           </button>
         )}
         

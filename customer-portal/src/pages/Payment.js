@@ -77,10 +77,7 @@ const Payment = () => {
         setTransactionId(data.transactionId);
         setPaymentStep('ussd');
         
-        // Start checking payment status after 30 seconds
-        setTimeout(() => {
-          startStatusChecking();
-        }, 30000);
+        // Customer will click "I've completed payment" button to start status checking
         
       } else {
         console.error('❌ Un Punto API Error:', data);

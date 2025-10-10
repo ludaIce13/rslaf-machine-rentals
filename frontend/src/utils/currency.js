@@ -1,8 +1,8 @@
 // Currency utilities for RSLAF Smart Rental System
 // Default currency: Sierra Leone Leones (SLL)
 
-// Exchange rate: 1 USD ≈ 22,000 SLL (approximate, update as needed)
-const USD_TO_SLL_RATE = 22000;
+// Exchange rate: 1 USD = 24 SLL (Sierra Leone current rate)
+const USD_TO_SLL_RATE = 24;
 
 export const formatCurrency = (amount, options = {}) => {
   const {

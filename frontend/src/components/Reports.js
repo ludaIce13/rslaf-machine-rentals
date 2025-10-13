@@ -12,15 +12,79 @@ const Reports = () => {
 
   useEffect(() => {
     generateReport();
+
+    // Listen for order updates (same as Orders page)
+    const handleStorageChange = (e) => {
+      if (e.key === 'demoOrders' || e.key === 'rslaf_shared_orders' || e.type === 'orderUpdated') {
+        console.log('📊 Reports: Order update detected, refreshing...');
+        generateReport();
+      }
+    };
+
+    const handleOrderUpdate = () => {
+      console.log('📊 Reports: Custom order update event received, refreshing...');
+      generateReport();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('orderUpdated', handleOrderUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('orderUpdated', handleOrderUpdate);
+    };
   }, []);
 
   const generateReport = async () => {
     setLoading(true);
+    console.log('📊 Generating report...');
+    
     try {
-      // Get all orders from localStorage
-      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-      const allOrders = [...demoOrders, ...sharedOrders];
+      let allOrders = [];
+
+      // PRIORITY 1: Try to fetch orders from backend (same as Orders page)
+      try {
+        const isProduction = window.location.hostname.includes('onrender.com');
+        const apiUrl = isProduction 
+          ? 'https://rslaf-backend.onrender.com/orders/public/all'
+          : 'http://localhost:3001/api/orders';
+        
+        console.log('📊 Fetching orders from:', apiUrl);
+        const response = await fetch(apiUrl);
+        
+        if (response.ok) {
+          const data = await response.json();
+          allOrders = Array.isArray(data) ? data : (data.data || []);
+          
+          // Normalize data
+          allOrders = allOrders.map((o) => {
+            const customer_info = o.customer_info || {
+              name: o.customer_name || o.customer?.name || '',
+              email: o.customer_email || o.customer?.email || '',
+              phone: o.customer_phone || o.customer?.phone || ''
+            };
+            return {
+              ...o,
+              customer_info,
+              equipment_name: o.equipment_name || o.product?.name || o.item_name || '',
+              total_price: typeof o.total_price === 'number' ? o.total_price : (o.total_amount || o.total || 0),
+            };
+          });
+          console.log('✅ Orders fetched from API for reports:', allOrders.length);
+        } else {
+          console.error('❌ API returned error:', response.status);
+        }
+      } catch (apiError) {
+        console.error('⚠️ API fetch error:', apiError);
+      }
+
+      // PRIORITY 2: Fallback to localStorage if API failed
+      if (allOrders.length === 0) {
+        const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+        const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+        allOrders = [...demoOrders, ...sharedOrders];
+        console.log('💾 Using localStorage orders:', allOrders.length);
+      }
 
       // Filter orders by date range
       const filteredOrders = allOrders.filter(order => {
@@ -31,13 +95,15 @@ const Reports = () => {
         return orderDate >= startDate && orderDate <= endDate;
       });
 
+      console.log('📊 Filtered orders for date range:', filteredOrders.length);
+
       // Calculate analytics
       const analytics = calculateAnalytics(filteredOrders);
       setReportData(analytics);
       
-      console.log('📊 Report generated:', analytics);
+      console.log('✅ Report generated:', analytics);
     } catch (error) {
-      console.error('Error generating report:', error);
+      console.error('❌ Error generating report:', error);
     } finally {
       setLoading(false);
     }

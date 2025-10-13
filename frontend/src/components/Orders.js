@@ -236,65 +236,82 @@ const Orders = () => {
     alert(`Order Details:\n\nCustomer: ${order.customer_info?.name || order.customer?.name}\nEquipment: ${order.equipment_name || order.product?.name}\nAmount: $${order.total_price}\nStatus: ${order.status}\nOrder ID: ${order.id}`);
   };
 
-  const handleEditOrder = (order) => {
-    const newStatus = prompt(`Update status for ${order.customer_info?.name || order.customer?.name}:\n\nCurrent: ${order.status}\n\nEnter new status (pending, paid, confirmed, delivered):`, order.status);
-    
-    if (newStatus && newStatus !== order.status) {
-      // Update order in the orders array
-      const updatedOrders = orders.map(o => 
-        o.id === order.id 
-          ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
-          : o
-      );
-      setOrders(updatedOrders);
-      
-      // Update in localStorage
-      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-      const updatedDemoOrders = demoOrders.map(o => 
-        o.id === order.id 
-          ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
-          : o
-      );
-      localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
-      
-      console.log(`✅ Order ${order.id} status updated to: ${newStatus}`);
-    }
-  };
+  /* ==========================================
+   * AUDIT COMPLIANCE: Edit and Delete Functions Disabled
+   * ==========================================
+   * These functions have been disabled to maintain audit trail integrity
+   * and prevent unauthorized modification or deletion of transaction records.
+   * 
+   * Reason: Management requirement to prevent audit issues
+   * Date: 2024-10-13
+   * 
+   * For order modifications, use workflow buttons:
+   * - Mark Delivered (for paid orders awaiting delivery/pickup)
+   * - Mark Returned (for rented equipment)
+   * 
+   * These workflow actions maintain proper audit trails.
+   * ==========================================
+   */
 
-  const handleDeleteOrder = (order) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete this order?\n\nCustomer: ${order.customer_info?.name || order.customer?.name}\nEquipment: ${order.equipment_name || order.product?.name}\nAmount: $${order.total_price}`);
-    
-    if (!confirmDelete) return;
+  // const handleEditOrder = (order) => {
+  //   const newStatus = prompt(`Update status for ${order.customer_info?.name || order.customer?.name}:\n\nCurrent: ${order.status}\n\nEnter new status (pending, paid, confirmed, delivered):`, order.status);
+  //   
+  //   if (newStatus && newStatus !== order.status) {
+  //     // Update order in the orders array
+  //     const updatedOrders = orders.map(o => 
+  //       o.id === order.id 
+  //         ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
+  //         : o
+  //     );
+  //     setOrders(updatedOrders);
+  //     
+  //     // Update in localStorage
+  //     const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+  //     const updatedDemoOrders = demoOrders.map(o => 
+  //       o.id === order.id 
+  //         ? { ...o, status: newStatus, updated_at: new Date().toISOString() }
+  //         : o
+  //     );
+  //     localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
+  //     
+  //     console.log(`✅ Order ${order.id} status updated to: ${newStatus}`);
+  //   }
+  // };
 
-    const isProduction = window.location.hostname.includes('onrender.com');
-    const deleteFromState = () => {
-      const updatedOrders = orders.filter(o => o.id !== order.id);
-      setOrders(updatedOrders);
-      const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
-      const updatedDemoOrders = demoOrders.filter(o => o.id !== order.id);
-      localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
-      // Also remove from shared orders cache used by Dashboard
-      const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
-      const updatedShared = sharedOrders.filter(o => o.id !== order.id);
-      localStorage.setItem('rslaf_shared_orders', JSON.stringify(updatedShared));
-      window.dispatchEvent(new Event('orderUpdated'));
-      console.log(`🗑️ Order ${order.id} deleted`);
-    };
+  // const handleDeleteOrder = (order) => {
+  //   const confirmDelete = window.confirm(`Are you sure you want to delete this order?\n\nCustomer: ${order.customer_info?.name || order.customer?.name}\nEquipment: ${order.equipment_name || order.product?.name}\nAmount: $${order.total_price}`);
+  //   
+  //   if (!confirmDelete) return;
 
-    if (isProduction) {
-      fetch(`https://rslaf-backend.onrender.com/orders/public/${order.id}`, { method: 'DELETE' })
-        .then(res => {
-          if (!res.ok) throw new Error('Delete failed');
-          deleteFromState();
-        })
-        .catch(err => {
-          console.error('❌ Failed to delete on server, removing locally as fallback', err);
-          deleteFromState();
-        });
-    } else {
-      deleteFromState();
-    }
-  };
+  //   const isProduction = window.location.hostname.includes('onrender.com');
+  //   const deleteFromState = () => {
+  //     const updatedOrders = orders.filter(o => o.id !== order.id);
+  //     setOrders(updatedOrders);
+  //     const demoOrders = JSON.parse(localStorage.getItem('demoOrders') || '[]');
+  //     const updatedDemoOrders = demoOrders.filter(o => o.id !== order.id);
+  //     localStorage.setItem('demoOrders', JSON.stringify(updatedDemoOrders));
+  //     // Also remove from shared orders cache used by Dashboard
+  //     const sharedOrders = JSON.parse(localStorage.getItem('rslaf_shared_orders') || '[]');
+  //     const updatedShared = sharedOrders.filter(o => o.id !== order.id);
+  //     localStorage.setItem('rslaf_shared_orders', JSON.stringify(updatedShared));
+  //     window.dispatchEvent(new Event('orderUpdated'));
+  //     console.log(`🗑️ Order ${order.id} deleted`);
+  //   };
+
+  //   if (isProduction) {
+  //     fetch(`https://rslaf-backend.onrender.com/orders/public/${order.id}`, { method: 'DELETE' })
+  //       .then(res => {
+  //         if (!res.ok) throw new Error('Delete failed');
+  //         deleteFromState();
+  //       })
+  //       .catch(err => {
+  //         console.error('❌ Failed to delete on server, removing locally as fallback', err);
+  //         deleteFromState();
+  //       });
+  //   } else {
+  //     deleteFromState();
+  //   }
+  // };
 
   const clearAllOrders = () => {
     const confirmClear = window.confirm('Are you sure you want to clear all orders? This will remove all orders from the database (demo) and local storage.');
@@ -624,7 +641,7 @@ const Orders = () => {
                         <button 
                           onClick={() => handleViewOrder(order)}
                           className="p-1 text-blue-400 hover:text-blue-600"
-                          title="View Order"
+                          title="View Order Details"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -651,24 +668,7 @@ const Orders = () => {
                             Mark Returned
                           </button>
                         )}
-                        <button 
-                          onClick={() => handleEditOrder(order)}
-                          className="p-1 text-green-400 hover:text-green-600"
-                          title="Edit Order"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button 
-                          onClick={() => handleDeleteOrder(order)}
-                          className="p-1 text-red-400 hover:text-red-600"
-                          title="Delete Order"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {/* Edit and Delete buttons removed for audit compliance */}
                       </div>
                     </td>
                   </tr>

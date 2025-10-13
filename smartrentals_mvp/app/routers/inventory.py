@@ -44,22 +44,25 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
 
 @router.get("/counts")
 def get_counts(db: Session = Depends(get_db)):
-    # Returns counts per product: total and available (not currently rented)
+    # Returns counts per product: total and available (not currently booked/rented)
     try:
         # Get all inventory items
         all_items = db.query(models.InventoryItem).all()
         print(f"Found {len(all_items)} total inventory items")
         
-        # Get all currently rented inventory item IDs
-        # Status 'rented' means equipment is currently out with customer
-        rented_reservations = db.query(models.Reservation).join(
+        # Get all currently booked/rented inventory item IDs
+        # Include all active order statuses: paid_awaiting_delivery, paid_awaiting_pickup, rented
+        # Exclude: pending (unpaid), cancelled, returned
+        active_statuses = ['paid_awaiting_delivery', 'paid_awaiting_pickup', 'rented']
+        
+        booked_reservations = db.query(models.Reservation).join(
             models.Order
         ).filter(
-            models.Order.status == 'rented'
+            models.Order.status.in_(active_statuses)
         ).all()
         
-        rented_inventory_ids = set(res.inventory_item_id for res in rented_reservations)
-        print(f"Currently rented inventory IDs: {rented_inventory_ids}")
+        booked_inventory_ids = set(res.inventory_item_id for res in booked_reservations)
+        print(f"Currently booked/rented inventory IDs: {booked_inventory_ids} (statuses: {active_statuses})")
         
         counts_by_product = {}
         for item in all_items:
@@ -67,15 +70,15 @@ def get_counts(db: Session = Depends(get_db)):
             if pid not in counts_by_product:
                 counts_by_product[pid] = {"total": 0, "active": 0}
             counts_by_product[pid]["total"] += 1
-            # Count as active/available if: item is active AND not currently rented
-            if item.active and item.id not in rented_inventory_ids:
+            # Count as active/available if: item is active AND not currently booked/rented
+            if item.active and item.id not in booked_inventory_ids:
                 counts_by_product[pid]["active"] += 1
         
         result = [
             {"product_id": pid, "total": counts["total"], "active": counts["active"]}
             for pid, counts in counts_by_product.items()
         ]
-        print(f"Counts result (excluding rented): {result}")
+        print(f"Counts result (excluding booked/rented): {result}")
         return result
     except Exception as e:
         print(f"Error in get_counts: {e}")

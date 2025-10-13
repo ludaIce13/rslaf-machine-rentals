@@ -484,29 +484,39 @@ const Inventory = () => {
             <div className="p-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">{product.name}</h3>
               <p className="text-gray-500 text-sm mb-3">{product.category}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-green-600 font-semibold">{(product.hourly_rate || 0) > 0 ? `$${product.hourly_rate}/hour` : `$${product.daily_rate}/day`}</span>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded font-medium">
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      {(counts[product.id]?.active || 0)}
-                    </span>
-                    <span className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-200 px-2 py-1 rounded font-medium">
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-                      </svg>
-                      {(counts[product.id]?.total || 0)}
-                    </span>
-                  </div>
-                  <button onClick={() => openUnitsDrawer(product)} className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                    Units
-                  </button>
-                  <button onClick={() => openEdit(product)} className="text-gray-700 hover:text-gray-900 text-sm">Edit</button>
-                  <button onClick={() => handleDeleteProduct(product)} className="text-red-600 hover:text-red-700 text-sm">Delete</button>
-                </div>
+              
+              {/* Price */}
+              <div className="mb-3">
+                <span className="text-green-600 font-semibold text-lg">{(product.hourly_rate || 0) > 0 ? `$${product.hourly_rate}/hour` : `$${product.daily_rate}/day`}</span>
+              </div>
+              
+              {/* Inventory Badges */}
+              <div className="flex items-center gap-2 mb-3">
+                <span className="flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1.5 rounded-md text-sm font-medium">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  {(counts[product.id]?.active || 0)}
+                </span>
+                <span className="flex items-center gap-1 bg-gray-100 text-gray-700 border border-gray-200 px-2.5 py-1.5 rounded-md text-sm font-medium">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+                  </svg>
+                  {(counts[product.id]?.total || 0)}
+                </span>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button onClick={() => openUnitsDrawer(product)} className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-md text-sm font-medium transition-colors border border-blue-200">
+                  Units
+                </button>
+                <button onClick={() => openEdit(product)} className="px-3 py-1.5 bg-gray-50 text-gray-700 hover:bg-gray-100 rounded-md text-sm font-medium transition-colors border border-gray-200">
+                  Edit
+                </button>
+                <button onClick={() => handleDeleteProduct(product)} className="px-3 py-1.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-md text-sm font-medium transition-colors border border-red-200">
+                  Delete
+                </button>
               </div>
             </div>
           </div>

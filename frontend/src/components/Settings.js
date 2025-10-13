@@ -106,22 +106,37 @@ const Settings = () => {
     try {
       // Save to localStorage
       localStorage.setItem('rslaf_admin_settings', JSON.stringify(settings));
-      console.log('✅ Settings saved successfully');
+      console.log('✅ Settings saved successfully:', {
+        email: settings.email,
+        fullName: settings.fullName,
+        companyName: settings.companyName
+      });
       setSaveStatus('saved');
       
       // Dispatch custom event for other components
-      window.dispatchEvent(new CustomEvent('settingsUpdated', { 
+      const event = new CustomEvent('settingsUpdated', { 
         detail: settings 
+      });
+      window.dispatchEvent(event);
+      console.log('📡 Settings update event dispatched');
+      
+      // Force a storage event for cross-tab sync
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'rslaf_admin_settings',
+        newValue: JSON.stringify(settings),
+        oldValue: null,
+        storageArea: localStorage,
+        url: window.location.href
       }));
       
-      // Show success message
-      alert('Settings saved successfully!');
+      // Show success message with current email
+      alert(`✅ Settings Saved Successfully!\\n\\nEmail: ${settings.email}\\nName: ${settings.fullName}\\n\\nChanges will appear immediately across the admin portal.`);
       
       setTimeout(() => setSaveStatus(''), 3000);
     } catch (error) {
       console.error('❌ Error saving settings:', error);
       setSaveStatus('error');
-      alert('Failed to save settings. Please try again.');
+      alert('❌ Failed to save settings. Please try again.');
       setTimeout(() => setSaveStatus(''), 3000);
     }
   };
@@ -406,16 +421,23 @@ const Settings = () => {
             <div className="mb-6">
               <h2 className="text-xl font-semibold text-gray-900 mb-2">Account Settings</h2>
               <p className="text-gray-500">Manage your personal account information and preferences.</p>
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>Tip:</strong> After making changes, click the <strong>"Save Changes"</strong> button in the top-right corner. Your information will update across the entire admin portal instantly.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-6">
               <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
                 <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-green-700 rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">A</span>
+                  <span className="text-white font-bold text-xl">
+                    {settings.fullName ? settings.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'A'}
+                  </span>
                 </div>
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900">Admin User</h3>
-                  <p className="text-gray-500">System Administrator</p>
+                  <h3 className="text-lg font-medium text-gray-900">{settings.fullName || 'Admin User'}</h3>
+                  <p className="text-gray-500">{settings.role === 'admin' ? 'System Administrator' : settings.role === 'manager' ? 'Manager' : 'Operator'}</p>
                 </div>
               </div>
 

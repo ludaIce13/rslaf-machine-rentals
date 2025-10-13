@@ -597,78 +597,226 @@ const Inventory = () => {
 
       {/* Edit Product Modal */}
       {editOpen && (
-        <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/30" onClick={closeEdit} />
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-2xl rounded-lg shadow-xl border border-gray-200">
-              <div className="p-4 border-b flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Edit Product • #{editData?.id}</h3>
-                <button onClick={closeEdit} className="text-gray-600 hover:text-gray-900">✕</button>
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black bg-opacity-50 transition-opacity" onClick={closeEdit} />
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="relative bg-white w-full max-w-3xl rounded-xl shadow-2xl transform transition-all my-8">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Edit Equipment</h3>
+                    <p className="text-blue-100 text-sm mt-1">Update equipment details and settings</p>
+                  </div>
+                  <button 
+                    onClick={closeEdit} 
+                    type="button"
+                    className="text-white hover:bg-white/20 rounded-lg p-2 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <form onSubmit={saveEdit} className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <input className="w-full border rounded p-2" value={editData?.name || ''} onChange={(e)=>setEditData({...editData, name: e.target.value})} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">SKU</label>
-                  <input className="w-full border rounded p-2" value={editData?.sku || ''} onChange={(e)=>setEditData({...editData, sku: e.target.value})} required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Daily Rate ($)</label>
-                  <input type="number" step="0.01" className="w-full border rounded p-2" value={editData?.daily_rate ?? ''} onChange={(e)=>setEditData({...editData, daily_rate: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Hourly Rate ($)</label>
-                  <input type="number" step="0.01" className="w-full border rounded p-2" value={editData?.hourly_rate ?? ''} onChange={(e)=>setEditData({...editData, hourly_rate: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Min Hours</label>
-                  <input type="number" step="1" min="1" className="w-full border rounded p-2" value={editData?.min_hours ?? ''} onChange={(e)=>setEditData({...editData, min_hours: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Max Hours (optional)</label>
-                  <input type="number" step="1" className="w-full border rounded p-2" value={editData?.max_hours ?? ''} onChange={(e)=>setEditData({...editData, max_hours: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Category</label>
-                  <input className="w-full border rounded p-2" value={editData?.category || ''} onChange={(e)=>setEditData({...editData, category: e.target.value})} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Image URL</label>
-                  <input className="w-full border rounded p-2" value={editData?.image_url || ''} onChange={(e)=>setEditData({...editData, image_url: e.target.value})} />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Upload New Image</label>
-                  <input type="file" accept="image/*" onChange={async (e) => {
-                    const f = e.target.files && e.target.files[0];
-                    if (!f) return;
-                    try {
-                      const res = await uploadProductImage(f);
-                      const url = res.data?.url || res.data?.path || '';
-                      if (url) setEditData({...editData, image_url: url});
-                    } catch (err) {
-                      console.error('Upload failed', err);
-                      alert('Failed to upload image');
-                    }
-                  }} className="w-full" />
-                  {editData?.image_url && (
-                    <div className="mt-2">
-                      <img src={editData.image_url.startsWith('/static/') ? `${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}${editData.image_url}` : editData.image_url} alt="Preview" className="h-24 w-auto object-cover rounded border" onError={(e) => e.target.style.display = 'none'} />
+
+              {/* Scrollable Form */}
+              <form onSubmit={saveEdit} className="max-h-[calc(100vh-200px)] overflow-y-auto">
+                <div className="p-6 space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs">1</span>
+                      Basic Information
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                        <input 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.name || ''} 
+                          onChange={(e)=>setEditData({...editData, name: e.target.value})} 
+                          required 
+                          placeholder="e.g., Bob Cat"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">SKU *</label>
+                        <input 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.sku || ''} 
+                          onChange={(e)=>setEditData({...editData, sku: e.target.value})} 
+                          required 
+                          placeholder="e.g., BOB-001"
+                        />
+                      </div>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Pricing & Duration */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs">2</span>
+                      Pricing & Duration
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate ($)</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.daily_rate ?? ''} 
+                          onChange={(e)=>setEditData({...editData, daily_rate: e.target.value})} 
+                          placeholder="150"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Hourly Rate ($)</label>
+                        <input 
+                          type="number" 
+                          step="0.01" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.hourly_rate ?? ''} 
+                          onChange={(e)=>setEditData({...editData, hourly_rate: e.target.value})} 
+                          placeholder="25"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Min Hours</label>
+                        <input 
+                          type="number" 
+                          step="1" 
+                          min="1" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.min_hours ?? ''} 
+                          onChange={(e)=>setEditData({...editData, min_hours: e.target.value})} 
+                          placeholder="1"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Hours (optional)</label>
+                        <input 
+                          type="number" 
+                          step="1" 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.max_hours ?? ''} 
+                          onChange={(e)=>setEditData({...editData, max_hours: e.target.value})} 
+                          placeholder="No limit"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Category & Images */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs">3</span>
+                      Category & Images
+                    </h4>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <input 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.category || ''} 
+                          onChange={(e)=>setEditData({...editData, category: e.target.value})} 
+                          placeholder="e.g., Earth Moving Equipment"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+                        <input 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                          value={editData?.image_url || ''} 
+                          onChange={(e)=>setEditData({...editData, image_url: e.target.value})} 
+                          placeholder="https://..."
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Upload New Image</label>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={async (e) => {
+                            const f = e.target.files && e.target.files[0];
+                            if (!f) return;
+                            try {
+                              const res = await uploadProductImage(f);
+                              const url = res.data?.url || res.data?.path || '';
+                              if (url) setEditData({...editData, image_url: url});
+                            } catch (err) {
+                              console.error('Upload failed', err);
+                              alert('Failed to upload image');
+                            }
+                          }} 
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        />
+                        {editData?.image_url && (
+                          <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                            <p className="text-xs text-gray-600 mb-2">Preview:</p>
+                            <img 
+                              src={editData.image_url.startsWith('/static/') ? `${process.env.REACT_APP_API_URL || 'https://rslaf-backend.onrender.com'}${editData.image_url}` : editData.image_url} 
+                              alt="Preview" 
+                              className="h-32 w-auto object-cover rounded border border-gray-300" 
+                              onError={(e) => e.target.style.display = 'none'} 
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs">4</span>
+                      Description
+                    </h4>
+                    <textarea 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                      rows={4} 
+                      value={editData?.description || ''} 
+                      onChange={(e)=>setEditData({...editData, description: e.target.value})} 
+                      placeholder="Describe the equipment, features, and usage..."
+                    />
+                  </div>
+
+                  {/* Published Status */}
+                  <div>
+                    <label className="inline-flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        checked={!!editData?.published} 
+                        onChange={(e)=>setEditData({...editData, published: e.target.checked})} 
+                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                      <div>
+                        <span className="font-medium text-gray-900">Published</span>
+                        <p className="text-sm text-gray-600">Make this equipment visible to customers</p>
+                      </div>
+                    </label>
+                  </div>
                 </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium mb-1">Description</label>
-                  <textarea className="w-full border rounded p-2" rows={3} value={editData?.description || ''} onChange={(e)=>setEditData({...editData, description: e.target.value})} />
-                </div>
-                <label className="inline-flex items-center gap-2 md:col-span-2">
-                  <input type="checkbox" checked={!!editData?.published} onChange={(e)=>setEditData({...editData, published: e.target.checked})} />
-                  <span>Published</span>
-                </label>
-                <div className="md:col-span-2 flex justify-end gap-2">
-                  <button type="button" onClick={closeEdit} className="px-4 py-2 border rounded">Cancel</button>
-                  <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+
+                {/* Footer Buttons */}
+                <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200 rounded-b-xl flex justify-end gap-3">
+                  <button 
+                    type="button" 
+                    onClick={closeEdit} 
+                    className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                  </button>
                 </div>
               </form>
             </div>

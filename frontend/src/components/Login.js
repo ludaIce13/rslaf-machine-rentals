@@ -15,15 +15,33 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await login({ email, password });
-      if (response.data && response.data.access_token) {
-        localStorage.setItem('token', response.data.access_token);
+      // Get saved settings email
+      const savedSettings = localStorage.getItem('rslaf_admin_settings');
+      let settingsEmail = 'admin@rslaf.com';
+      if (savedSettings) {
+        try {
+          const settings = JSON.parse(savedSettings);
+          settingsEmail = settings.email || 'admin@rslaf.com';
+        } catch (e) {
+          console.warn('Could not parse settings');
+        }
+      }
+
+      // Check if credentials match either default or saved email
+      const validEmails = ['admin@rslaf.com', settingsEmail];
+      const validPassword = 'admin123';
+
+      if (validEmails.includes(email) && password === validPassword) {
+        // Mock successful login
+        const mockToken = btoa(`${email}:${password}:${Date.now()}`);
+        localStorage.setItem('token', mockToken);
+        console.log('✅ Login successful with:', email);
         navigate('/');
       } else {
-        throw new Error('Invalid response from server');
+        throw new Error('Invalid credentials');
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      setError('Incorrect email or password. Please try again.');
       console.error('Login error:', err);
     } finally {
       setLoading(false);
@@ -124,9 +142,9 @@ const Login = () => {
 
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-            <p className="text-xs text-gray-400 mb-2">Demo Credentials:</p>
+            <p className="text-xs text-gray-400 mb-2">Login Credentials:</p>
             <div className="text-xs text-gray-300 space-y-1">
-              <div>Email: admin@rslaf.com</div>
+              <div>Email: admin@rslaf.com or your settings email</div>
               <div>Password: admin123</div>
             </div>
           </div>

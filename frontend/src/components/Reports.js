@@ -520,31 +520,75 @@ const Reports = () => {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-                        {reportData.orders.slice(0, 10).map((order) => (
-                          <tr key={order.id} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                              #SS{order.id.toString().padStart(4, '0')}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
-                              {order.customer_info?.name || order.customer?.name || 'Unknown'}
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                              {formatCurrency(getDisplayAmount(order.total_price || order.total_amount || 0, true))}
-                            </td>
-                            <td className="px-4 py-3 text-sm">
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                order.payment_status === 'completed' || order.status?.includes('paid')
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {order.payment_status === 'completed' || order.status?.includes('paid') ? 'Paid' : 'Pending'}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-600">
-                              {new Date(order.created_at || order.start_date).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
+                        {(() => {
+                          // Get unique customers (one order per customer max)
+                          const seenCustomers = new Set();
+                          const uniqueOrders = [];
+                          
+                          for (const order of reportData.orders) {
+                            const customerKey = order.customer_info?.email || order.customer?.email || order.customer_info?.name || order.customer?.name || order.customer_id;
+                            
+                            if (!seenCustomers.has(customerKey)) {
+                              seenCustomers.add(customerKey);
+                              uniqueOrders.push(order);
+                            }
+                            
+                            if (uniqueOrders.length >= 10) break;
+                          }
+                          
+                          return uniqueOrders.map((order) => {
+                            // Status badge logic using new simplified statuses
+                            const getStatusStyle = (status) => {
+                              switch(status) {
+                                case 'pending':
+                                  return 'bg-yellow-100 text-yellow-800';
+                                case 'ready':
+                                  return 'bg-blue-100 text-blue-800';
+                                case 'rented':
+                                  return 'bg-indigo-100 text-indigo-800';
+                                case 'returned':
+                                  return 'bg-green-100 text-green-800';
+                                case 'cancelled':
+                                  return 'bg-red-100 text-red-800';
+                                default:
+                                  return 'bg-gray-100 text-gray-800';
+                              }
+                            };
+                            
+                            const getStatusLabel = (status) => {
+                              switch(status) {
+                                case 'pending': return 'Pending';
+                                case 'ready': return 'Paid';
+                                case 'rented': return 'Rented';
+                                case 'returned': return 'Completed';
+                                case 'cancelled': return 'Cancelled';
+                                default: return status;
+                              }
+                            };
+                            
+                            return (
+                              <tr key={order.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                  #SS{order.id.toString().padStart(4, '0')}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {order.customer_info?.name || order.customer?.name || 'Unknown'}
+                                </td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                  {formatCurrency(getDisplayAmount(order.total_price || order.total_amount || 0, true))}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusStyle(order.status)}`}>
+                                    {getStatusLabel(order.status)}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-600">
+                                  {new Date(order.created_at || order.start_date).toLocaleDateString()}
+                                </td>
+                              </tr>
+                            );
+                          });
+                        })()}
                       </tbody>
                     </table>
                   </div>

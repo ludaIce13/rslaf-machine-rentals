@@ -22,7 +22,7 @@ const Home = () => {
     },
     {
       title: 'Tips for Operating Heavy Construction Equipment',
-      image: 'https://larsentoubro-wp-bucket.s3.ap-south-1.amazonaws.com/wp-content/uploads/2021/04/08115108/Home-under-construction-D85-dozer.jpg',
+      image: 'https://blog.constructionmarketingassociation.org/wp-content/uploads/2021/05/heavy-equipment.jpeg',
       excerpt: 'Safety is key on any job site. Learn essential tips for operating construction equipment safely and efficiently to prevent accidents and downtime.',
       linkText: 'Safety Tips',
       to: '/tips/safety'

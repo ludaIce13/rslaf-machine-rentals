@@ -6,6 +6,7 @@ const Customers = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [activeTab, setActiveTab] = useState('details'); // 'details' or 'history'
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({
     name: '',
@@ -189,7 +190,10 @@ const Customers = () => {
                 <div
                   key={customer.id}
                   className={`px-5 py-5 cursor-pointer hover:bg-gray-50 ${selectedCustomer?.id === customer.id ? 'bg-gray-50' : ''}`}
-                  onClick={() => setSelectedCustomer(customer)}
+                  onClick={() => {
+                    setSelectedCustomer(customer);
+                    setActiveTab('details'); // Reset to details tab when selecting a customer
+                  }}
                 >
                   <div className="grid grid-cols-12 gap-6 items-center min-h-[64px]">
                     <div className="flex items-center gap-4 col-span-6 min-w-0">
@@ -251,43 +255,63 @@ const Customers = () => {
 
                 {/* Tabs */}
                 <div className="flex gap-4 mb-4">
-                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm">Details</button>
-                  <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200">Rental History</button>
+                  <button 
+                    onClick={() => setActiveTab('details')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      activeTab === 'details' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Details
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('history')}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      activeTab === 'history' 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Rental History
+                  </button>
                 </div>
 
-                {/* Contact Information */}
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-gray-900">{selectedCustomer.email}</span>
-                      <span className="text-gray-500 text-sm">Email</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                      </svg>
-                      <span className="text-gray-900">{selectedCustomer.phone}</span>
-                    </div>
-                    {selectedCustomer.address && (
+                {/* Contact Information - Only show when Details tab is active */}
+                {activeTab === 'details' && (
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+                    <div className="space-y-3">
                       <div className="flex items-center gap-3">
                         <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
-                        <span className="text-gray-900">{selectedCustomer.address}</span>
-                        <span className="text-gray-500 text-sm">Address</span>
+                        <span className="text-gray-900">{selectedCustomer.email}</span>
+                        <span className="text-gray-500 text-sm">Email</span>
                       </div>
-                    )}
+                      <div className="flex items-center gap-3">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span className="text-gray-900">{selectedCustomer.phone}</span>
+                      </div>
+                      {selectedCustomer.address && (
+                        <div className="flex items-center gap-3">
+                          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span className="text-gray-900">{selectedCustomer.address}</span>
+                          <span className="text-gray-500 text-sm">Address</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Rental History */}
-              {selectedCustomer.rentalHistory && (
+              {/* Rental History - Only show when History tab is active */}
+              {activeTab === 'history' && selectedCustomer.rentalHistory && (
                 <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Rental History ({selectedCustomer.rentalHistory.length})</h3>
                   <div className="space-y-4">

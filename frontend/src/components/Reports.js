@@ -114,12 +114,16 @@ const Reports = () => {
     const totalRevenue = orders.reduce((sum, order) => 
       sum + (order.total_price || order.total_amount || 0), 0);
     
+    // Paid orders: ready (paid, awaiting delivery/pickup), rented (active), returned (completed)
     const paidOrders = orders.filter(o => 
-      o.payment_status === 'completed' || o.status === 'paid' || o.status?.includes('paid'));
+      o.status === 'ready' || o.status === 'rented' || o.status === 'returned');
     const paidRevenue = paidOrders.reduce((sum, order) => 
       sum + (order.total_price || order.total_amount || 0), 0);
     
-    const pendingRevenue = totalRevenue - paidRevenue;
+    // Pending orders: only 'pending' status (not yet paid)
+    const pendingOrders = orders.filter(o => o.status === 'pending');
+    const pendingRevenue = pendingOrders.reduce((sum, order) => 
+      sum + (order.total_price || order.total_amount || 0), 0);
 
     // Order status breakdown
     const statusCounts = {};

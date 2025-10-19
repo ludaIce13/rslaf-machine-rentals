@@ -179,7 +179,34 @@ const Reports = () => {
     };
   };
 
-  const exportToCSV = () => {
+  // Export Overview Report
+  const exportOverviewCSV = () => {
+    if (!reportData) return;
+    
+    const headers = ['Metric', 'Value'];
+    const rows = [
+      ['Total Orders', reportData.overview.totalOrders],
+      ['Total Revenue (USD)', `$${reportData.overview.totalRevenue.toFixed(2)}`],
+      ['Total Revenue (SLL)', `Le ${convertUSDToSLL(reportData.overview.totalRevenue).toFixed(0)}`],
+      ['Paid Revenue (USD)', `$${reportData.overview.paidRevenue.toFixed(2)}`],
+      ['Paid Revenue (SLL)', `Le ${convertUSDToSLL(reportData.overview.paidRevenue).toFixed(0)}`],
+      ['Pending Revenue (USD)', `$${reportData.overview.pendingRevenue.toFixed(2)}`],
+      ['Pending Revenue (SLL)', `Le ${convertUSDToSLL(reportData.overview.pendingRevenue).toFixed(0)}`],
+      ['Average Order Value (USD)', `$${reportData.overview.averageOrderValue.toFixed(2)}`],
+      ['Average Order Value (SLL)', `Le ${convertUSDToSLL(reportData.overview.averageOrderValue).toFixed(0)}`],
+      ['Unique Customers', reportData.overview.uniqueCustomers]
+    ];
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    downloadCSV(csvContent, `RSLAF_Overview_${dateRange.start}_to_${dateRange.end}.csv`);
+  };
+
+  // Export Revenue Report
+  const exportRevenueCSV = () => {
     if (!reportData || !reportData.orders) return;
     
     const headers = ['Order ID', 'Date', 'Customer', 'Equipment', 'Status', 'Payment Method', 'Amount (USD)', 'Amount (SLL)'];
@@ -199,11 +226,94 @@ const Reports = () => {
       ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
     ].join('\n');
     
+    downloadCSV(csvContent, `RSLAF_Revenue_${dateRange.start}_to_${dateRange.end}.csv`);
+  };
+
+  // Export Equipment Report
+  const exportEquipmentCSV = () => {
+    if (!reportData || !reportData.equipmentUsage) return;
+    
+    const headers = ['Equipment', 'Total Bookings', 'Revenue (USD)', 'Revenue (SLL)', 'Avg per Booking (USD)', 'Avg per Booking (SLL)'];
+    const rows = Object.entries(reportData.equipmentUsage)
+      .sort((a, b) => b[1].revenue - a[1].revenue)
+      .map(([equipment, data]) => [
+        equipment,
+        data.count,
+        data.revenue.toFixed(2),
+        convertUSDToSLL(data.revenue).toFixed(0),
+        (data.revenue / data.count).toFixed(2),
+        (convertUSDToSLL(data.revenue) / data.count).toFixed(0)
+      ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    downloadCSV(csvContent, `RSLAF_Equipment_${dateRange.start}_to_${dateRange.end}.csv`);
+  };
+
+  // Export Customers Report
+  const exportCustomersCSV = () => {
+    if (!reportData || !reportData.orders) return;
+    
+    // Group orders by customer
+    const customerData = {};
+    reportData.orders.forEach(order => {
+      const customerName = order.customer_info?.name || order.customer?.name || 'Unknown';
+      const customerEmail = order.customer_info?.email || order.customer?.email || '';
+      const customerKey = customerEmail || customerName;
+      
+      if (!customerData[customerKey]) {
+        customerData[customerKey] = {
+          name: customerName,
+          email: customerEmail,
+          totalOrders: 0,
+          totalSpent: 0,
+          lastOrder: order.created_at || order.start_date
+        };
+      }
+      
+      customerData[customerKey].totalOrders += 1;
+      customerData[customerKey].totalSpent += (order.total_price || order.total_amount || 0);
+      
+      // Update last order date if newer
+      const currentDate = new Date(order.created_at || order.start_date);
+      const lastDate = new Date(customerData[customerKey].lastOrder);
+      if (currentDate > lastDate) {
+        customerData[customerKey].lastOrder = order.created_at || order.start_date;
+      }
+    });
+    
+    const headers = ['Customer Name', 'Email', 'Total Orders', 'Total Spent (USD)', 'Total Spent (SLL)', 'Avg Order Value (USD)', 'Avg Order Value (SLL)', 'Last Order Date'];
+    const rows = Object.values(customerData)
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .map(customer => [
+        customer.name,
+        customer.email,
+        customer.totalOrders,
+        customer.totalSpent.toFixed(2),
+        convertUSDToSLL(customer.totalSpent).toFixed(0),
+        (customer.totalSpent / customer.totalOrders).toFixed(2),
+        (convertUSDToSLL(customer.totalSpent) / customer.totalOrders).toFixed(0),
+        new Date(customer.lastOrder).toLocaleDateString()
+      ]);
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+    
+    downloadCSV(csvContent, `RSLAF_Customers_${dateRange.start}_to_${dateRange.end}.csv`);
+  };
+
+  // Helper function to download CSV
+  const downloadCSV = (csvContent, filename) => {
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `RSLAF_Report_${dateRange.start}_to_${dateRange.end}.csv`;
+    link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -227,16 +337,6 @@ const Reports = () => {
           <h1 className="text-2xl font-semibold text-gray-900">Business Reports & Analytics</h1>
           <p className="text-gray-600 mt-1">Comprehensive insights into your rental operations</p>
         </div>
-        <button
-          onClick={exportToCSV}
-          disabled={!reportData || reportData.orders.length === 0}
-          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          Export CSV
-        </button>
       </div>
 
       {/* Date Range Filter */}
@@ -327,6 +427,20 @@ const Reports = () => {
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div>
+              {/* Export Button */}
+              <div className="flex justify-end mb-4">
+                <button
+                  onClick={exportOverviewCSV}
+                  disabled={!reportData}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </button>
+              </div>
+              
               {/* Key Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                 <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border border-green-200">
@@ -469,7 +583,19 @@ const Reports = () => {
           {/* Revenue Tab */}
           {activeTab === 'revenue' && (
             <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Analysis</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Revenue Analysis</h3>
+                <button
+                  onClick={exportRevenueCSV}
+                  disabled={!reportData || !reportData.orders}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </button>
+              </div>
               
               <div className="space-y-6">
                 {/* Revenue Summary */}
@@ -600,7 +726,19 @@ const Reports = () => {
           {/* Equipment Tab */}
           {activeTab === 'equipment' && (
             <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Equipment Performance</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Equipment Performance</h3>
+                <button
+                  onClick={exportEquipmentCSV}
+                  disabled={!reportData || !reportData.equipmentUsage}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </button>
+              </div>
               
               <div className="space-y-4">
                 {Object.entries(reportData.equipmentUsage)
@@ -636,7 +774,19 @@ const Reports = () => {
           {/* Customers Tab */}
           {activeTab === 'customers' && (
             <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Insights</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Customer Insights</h3>
+                <button
+                  onClick={exportCustomersCSV}
+                  disabled={!reportData || !reportData.orders}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export CSV
+                </button>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">

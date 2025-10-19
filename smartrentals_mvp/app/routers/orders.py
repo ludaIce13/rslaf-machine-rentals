@@ -100,8 +100,8 @@ async def list_all_orders_public(db: Session = Depends(get_db)):
                     extra_billing_hours = 0.0
                     extra_billing_amount = 0.0
 
-                    # Late delivery: if waiting for delivery and now past planned start
-                    if (o.status in ["paid_awaiting_delivery"]) and start_dt and now > start_dt:
+                    # Late delivery: if ready for delivery and now past planned start
+                    if (o.status in ["ready"]) and start_dt and now > start_dt:
                         is_late_delivery = True
 
                     # Active rental (picked up or delivered)
@@ -266,12 +266,9 @@ async def public_update_order(order_id: int, payload: dict, db: Session = Depend
         payment = models.Payment(order_id=order.id, method=str(method), amount=amt, reference=str(reference))
         db.add(payment)
 
-        # Auto-update to "paid_awaiting_delivery" or "paid_awaiting_pickup"
+        # Auto-update to "ready" (paid, ready for delivery or pickup)
         delivery_method = payload.get("delivery_method", "pickup")
-        if delivery_method == "delivery":
-            order.status = "paid_awaiting_delivery"
-        else:
-            order.status = "paid_awaiting_pickup"
+        order.status = "ready"
 
         # Update metadata
         if meta:

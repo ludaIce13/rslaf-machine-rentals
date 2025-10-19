@@ -102,7 +102,7 @@ const Dashboard = () => {
 
       // Calculate real stats from actual order data
       const activeRentals = allOrders.filter(order => 
-        order.status === 'confirmed' || order.status === 'pending' || order.status === 'paid'
+        order.status === 'ready' || order.status === 'rented'
       ).length;
       
       const totalRevenue = allOrders.reduce((sum, order) =>
@@ -333,8 +333,10 @@ const Dashboard = () => {
                     </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        order.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                        order.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                        order.status === 'rented' ? 'bg-indigo-100 text-indigo-800' :
                         order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        order.status === 'returned' ? 'bg-green-100 text-green-800' :
                         order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>

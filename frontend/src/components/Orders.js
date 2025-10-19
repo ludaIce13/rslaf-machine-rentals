@@ -61,7 +61,7 @@ const Orders = () => {
         const fbUrl = isProduction
           ? `https://rslaf-backend.onrender.com/orders/public/update/${order.id}`
           : `http://localhost:3001/api/orders/${order.id}`;
-        const delivery_method = order.status === 'paid_awaiting_delivery' ? 'delivery' : 'pickup';
+        const delivery_method = 'pickup'; // Default to pickup
         const fb = await fetch(fbUrl, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -190,21 +190,18 @@ const Orders = () => {
   const getStatusBadge = (status) => {
     const statusStyles = {
       pending: 'bg-yellow-100 text-yellow-800 border border-yellow-200',
-      paid: 'bg-green-100 text-green-800 border border-green-200',
-      paid_awaiting_delivery: 'bg-green-100 text-green-800 border border-green-200',
-      paid_awaiting_pickup: 'bg-green-100 text-green-800 border border-green-200',
-      confirmed: 'bg-blue-100 text-blue-800 border border-blue-200',
+      ready: 'bg-blue-100 text-blue-800 border border-blue-200',
       rented: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-      'ready for delivery': 'bg-purple-100 text-purple-800 border border-purple-200',
-      'picked up': 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-      returned: 'bg-gray-100 text-gray-800 border border-gray-200',
+      returned: 'bg-green-100 text-green-800 border border-green-200',
       cancelled: 'bg-red-100 text-red-800 border border-red-200'
     };
 
     const statusLabels = {
-      paid_awaiting_delivery: 'Paid / Awaiting Delivery',
-      paid_awaiting_pickup: 'Paid / Awaiting Pickup',
+      pending: 'Pending',
+      ready: 'Paid / Ready for Delivery or Pick Up',
       rented: 'Rented (Active)',
+      returned: 'Returned',
+      cancelled: 'Cancelled'
     };
 
     const label = statusLabels[status.toLowerCase()] || (status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' '));
@@ -492,10 +489,8 @@ const Orders = () => {
         >
           <option>All Statuses</option>
           <option>Pending</option>
-          <option>Paid</option>
-          <option>Confirmed</option>
-          <option>Ready for delivery</option>
-          <option>Picked up</option>
+          <option>Ready</option>
+          <option>Rented</option>
           <option>Returned</option>
           <option>Cancelled</option>
         </select>
@@ -649,7 +644,7 @@ const Orders = () => {
                           </svg>
                         </button>
                         {/* Mark Delivered / Picked Up */}
-                        {(order.status === 'paid_awaiting_delivery' || order.status === 'paid_awaiting_pickup') && (
+                        {order.status === 'ready' && (
                           <button
                             onClick={() => markDelivered(order)}
                             className="px-2 py-1 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700"

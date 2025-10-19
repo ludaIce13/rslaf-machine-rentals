@@ -203,7 +203,7 @@ const Payment = () => {
         currency: 'SLL' // Sierra Leone Leones
       };
 
-      // Try to update order via API - backend will auto-set status to paid_awaiting_delivery/pickup
+      // Try to update order via API - backend will auto-set status to 'ready'
       try {
         // Determine API URL based on environment
         const isProduction = window.location.hostname.includes('onrender.com');

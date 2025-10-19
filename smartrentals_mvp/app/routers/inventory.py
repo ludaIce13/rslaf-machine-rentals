@@ -51,9 +51,9 @@ def get_counts(db: Session = Depends(get_db)):
         print(f"Found {len(all_items)} total inventory items")
         
         # Get all currently booked/rented inventory item IDs
-        # Include all active order statuses: paid_awaiting_delivery, paid_awaiting_pickup, rented
+        # Include all active order statuses: ready (paid, awaiting delivery/pickup), rented (active)
         # Exclude: pending (unpaid), cancelled, returned
-        active_statuses = ['paid_awaiting_delivery', 'paid_awaiting_pickup', 'rented']
+        active_statuses = ['ready', 'rented']
         
         booked_reservations = db.query(models.Reservation).join(
             models.Order

@@ -11,9 +11,10 @@ class UserRole(str, enum.Enum):
 
 class OrderStatus(str, enum.Enum):
     pending = "pending"
-    confirmed = "confirmed"
-    cancelled = "cancelled"
+    ready = "ready"  # Paid, ready for delivery or pickup
+    rented = "rented"  # Currently with customer (active rental)
     returned = "returned"
+    cancelled = "cancelled"
 
 class User(Base):
     __tablename__ = "users"

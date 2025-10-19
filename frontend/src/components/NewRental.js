@@ -142,7 +142,7 @@ const NewRental = () => {
         end_date: `${formData.endDate}T${formData.endTime}:00`,
         total_hours: formData.totalHours,
         delivery_method: formData.deliveryMethod,
-        status: formData.paymentStatus === 'paid' ? 'paid_awaiting_delivery' : 'pending_payment',
+        status: formData.paymentStatus === 'paid' ? 'ready' : 'pending',
         notes: formData.notes,
         deposit_amount: formData.depositAmount,
         operator_required: formData.operatorRequired,

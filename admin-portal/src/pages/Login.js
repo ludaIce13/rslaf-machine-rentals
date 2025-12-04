@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './Login.css';
+import logo from '../assets/logo.jpg';
 
 const Login = ({ onLogin }) => {
   const [formData, setFormData] = useState({
@@ -56,8 +57,9 @@ const Login = ({ onLogin }) => {
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h1>SmartRentals Admin</h1>
-          <p>Sign in to access the admin dashboard</p>
+          <img src={logo} alt="RSLAF Logo" className="login-logo" />
+          <h1>RSLAF MACHINE RENTALS</h1>
+          <p>Equipment Management Portal</p>
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
@@ -75,7 +77,7 @@ const Login = ({ onLogin }) => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="admin@smartrentals.com"
+              placeholder="admin@rslaf.com or your settings email"
               required
               disabled={loading}
             />
@@ -105,8 +107,10 @@ const Login = ({ onLogin }) => {
         </form>
 
         <div className="login-footer">
-          <p><strong>Demo Credentials:</strong></p>
-          <p>Email: admin@smartrentals.com</p>
+          <p><strong>Welcome back</strong></p>
+          <p>Sign in to your account to continue</p>
+          <p className="demo-credentials">Login Credentials:</p>
+          <p>Email: admin@rslaf.com or your settings email</p>
           <p>Password: admin123</p>
         </div>
       </div>
